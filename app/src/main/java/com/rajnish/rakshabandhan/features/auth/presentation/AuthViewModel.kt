@@ -22,9 +22,7 @@ class AuthViewModel(
 
     fun checkAuthenticationSession() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                authState = AuthState.Initializing
-            )
+            _uiState.value = _uiState.value.copy(authState = AuthState.Initializing)
 
             try {
                 _uiState.value = _uiState.value.copy(
@@ -37,8 +35,7 @@ class AuthViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
-                        message = e.message
-                            ?: "Unable to check authentication session"
+                        message = e.message ?: "Unable to check authentication session"
                     )
                 )
             }
@@ -71,26 +68,24 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.value = state.copy(authState = AuthState.Enrolling)
 
-            val result = authRepository.verifyInvitation(email, code)
-
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Authenticated
-                )
-            }.onFailure { error ->
-                _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Error(
-                        message = error.message ?: "Unable to verify invitation"
+            authRepository.verifyInvitation(email, code)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Unauthenticated
                     )
-                )
-            }
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Error(
+                            message = error.message ?: "Unable to verify invitation"
+                        )
+                    )
+                }
         }
     }
 
     fun setAuthenticating() {
-        _uiState.value = _uiState.value.copy(
-            authState = AuthState.Authenticating
-        )
+        _uiState.value = _uiState.value.copy(authState = AuthState.Authenticating)
     }
 
     fun onAuthenticationSuccess() {
@@ -105,14 +100,11 @@ class AuthViewModel(
                     return@launch
                 }
 
-                _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Authenticated
-                )
+                _uiState.value = _uiState.value.copy(authState = AuthState.Authenticated)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
-                        message = e.message
-                            ?: "Unable to complete biometric authentication"
+                        message = e.message ?: "Unable to complete biometric authentication"
                     )
                 )
             }
@@ -120,11 +112,7 @@ class AuthViewModel(
     }
 
     fun onAuthenticationError(message: String) {
-        _uiState.value = _uiState.value.copy(
-            authState = AuthState.Error(
-                message = message
-            )
-        )
+        _uiState.value = _uiState.value.copy(authState = AuthState.Error(message))
     }
 
     fun resetError() {
@@ -135,7 +123,6 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 authRepository.clearAuthenticatedSession()
-
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.EnrollmentRequired,
                     email = "",
@@ -144,8 +131,7 @@ class AuthViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
-                        message = e.message
-                            ?: "Unable to clear authentication session"
+                        message = e.message ?: "Unable to clear authentication session"
                     )
                 )
             }
