@@ -19,10 +19,11 @@ interface InvitationRepository {
     ): InvitationCreationResult
 
     /**
-     * Verifies a code entered by a sister against the remote invitation state.
+     * Verifies the supplied email + code against the remote invitation state.
      * A successful verification consumes the invitation atomically.
      */
     suspend fun verifyAndConsumeInvitation(
+        email: String,
         code: String
     ): InvitationVerificationResult
 }
