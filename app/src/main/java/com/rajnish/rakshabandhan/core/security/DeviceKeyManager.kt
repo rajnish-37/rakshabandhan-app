@@ -2,15 +2,14 @@ package com.rajnish.rakshabandhan.core.security
 
 import android.os.Build
 import android.util.Base64
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.PublicKey
-import java.security.KeyStore
-import javax.crypto.Cipher
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 
 class DeviceKeyManager {
 
@@ -29,14 +28,6 @@ class DeviceKeyManager {
             keyId = keyId(keyPair.public),
             publicKey = Base64.encodeToString(keyPair.public.encoded, Base64.NO_WRAP),
         )
-    }
-
-    fun createSigningCipher(): Cipher {
-        val privateKey = loadKeyPair()?.private
-            ?: throw IllegalStateException("Device signing key is not enrolled")
-
-        return Cipher.getInstance("SHA256withECDSA")
-            .also { it.init(Cipher.ENCRYPT_MODE, privateKey) }
     }
 
     private fun generateKeyPair(): KeyPair {
