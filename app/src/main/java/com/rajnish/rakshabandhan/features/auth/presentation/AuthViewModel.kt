@@ -25,8 +25,11 @@ class AuthViewModel(
             _uiState.value = _uiState.value.copy(authState = AuthState.Initializing)
 
             try {
+                val hasFirebaseSession = authRepository.hasFirebaseSession()
+                val hasDeviceKey = authRepository.hasDeviceKey()
+
                 _uiState.value = _uiState.value.copy(
-                    authState = if (authRepository.hasFirebaseSession()) {
+                    authState = if (hasFirebaseSession || hasDeviceKey) {
                         AuthState.Unauthenticated
                     } else {
                         AuthState.EnrollmentRequired
@@ -70,9 +73,7 @@ class AuthViewModel(
 
             authRepository.verifyInvitation(email, code)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(
-                        authState = AuthState.Unauthenticated
-                    )
+                    _uiState.value = _uiState.value.copy(authState = AuthState.Unauthenticated)
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
@@ -88,13 +89,47 @@ class AuthViewModel(
         _uiState.value = _uiState.value.copy(authState = AuthState.Authenticating)
     }
 
+    fun prepareDeviceLogin(onChallengeReady: (challengeId: String, challenge: String) -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(authState = AuthState.Authenticating)
+
+            authRepository.requestDeviceChallenge()
+                .onSuccess { challenge ->
+                    onChallengeReady(challenge.challengeId, challenge.challenge)
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Error(
+                            message = error.message ?: "Unable to start biometric sign in"
+                        )
+                    )
+                }
+        }
+    }
+
+    fun completeDeviceLogin(challengeId: String, signature: ByteArray) {
+        viewModelScope.launch {
+            authRepository.completeDeviceLogin(challengeId, signature)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(authState = AuthState.Authenticated)
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Error(
+                            message = error.message ?: "Unable to complete biometric sign in"
+                        )
+                    )
+                }
+        }
+    }
+
     fun onAuthenticationSuccess() {
         viewModelScope.launch {
             try {
                 if (!authRepository.hasFirebaseSession()) {
                     _uiState.value = _uiState.value.copy(
                         authState = AuthState.Error(
-                            message = "Firebase session is unavailable. Complete invitation verification first."
+                            message = "Firebase session is unavailable. Complete device sign in first."
                         )
                     )
                     return@launch
@@ -124,7 +159,11 @@ class AuthViewModel(
             try {
                 authRepository.clearAuthenticatedSession()
                 _uiState.value = _uiState.value.copy(
-                    authState = AuthState.EnrollmentRequired,
+                    authState = if (authRepository.hasDeviceKey()) {
+                        AuthState.Unauthenticated
+                    } else {
+                        AuthState.EnrollmentRequired
+                    },
                     email = "",
                     code = "",
                 )
