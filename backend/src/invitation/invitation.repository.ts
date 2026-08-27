@@ -31,9 +31,10 @@ export class InvitationRepository {
       .limit(1)
       .get();
 
-    if (snapshot.empty) return null;
+    const document = snapshot.docs.at(0);
+    if (!document) return null;
 
-    const data = snapshot.docs[0].data();
+    const data = document.data();
     return {
       invitationId: data.invitationId,
       sisterId: data.sisterId,
