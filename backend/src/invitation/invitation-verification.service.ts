@@ -1,15 +1,20 @@
 import { timingSafeEqual } from "node:crypto";
 import { InvitationRepository } from "./invitation.repository.js";
 import { hashInvitationCode } from "./invitation-code.service.js";
+import { SisterAccountService } from "../sister/sister-account.service.js";
 
 export interface VerifyInvitationResult {
   invitationId: string;
   sisterId: string;
   email: string;
+  authUid: string;
 }
 
 export class InvitationVerificationService {
-  constructor(private readonly repository = new InvitationRepository()) {}
+  constructor(
+    private readonly repository = new InvitationRepository(),
+    private readonly sisterAccountService = new SisterAccountService(),
+  ) {}
 
   async verifyInvitation(
     email: string,
@@ -46,12 +51,21 @@ export class InvitationVerificationService {
       throw new Error("Invalid invitation code");
     }
 
-    await this.repository.markRedeemed(invitation.invitationId);
+    const account = await this.sisterAccountService.provision(
+      invitation.sisterId,
+      invitation.email,
+    );
+
+    const redeemed = await this.repository.markRedeemed(invitation.invitationId);
+    if (!redeemed) {
+      throw new Error("Invitation has already been redeemed");
+    }
 
     return {
       invitationId: invitation.invitationId,
       sisterId: invitation.sisterId,
       email: invitation.email,
+      authUid: account.authUid,
     };
   }
 }

@@ -1,4 +1,5 @@
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 const firebaseApp =
@@ -7,4 +8,5 @@ const firebaseApp =
     credential: applicationDefault(),
   });
 
+export const auth = getAuth(firebaseApp);
 export const firestore = getFirestore(firebaseApp);

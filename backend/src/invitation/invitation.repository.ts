@@ -47,10 +47,22 @@ export class InvitationRepository {
     };
   }
 
-  async markRedeemed(invitationId: string): Promise<void> {
-    await this.collection.doc(invitationId).update({
-      status: "REDEEMED",
-      redeemedAt: FieldValue.serverTimestamp(),
+  async markRedeemed(invitationId: string): Promise<boolean> {
+    const reference = this.collection.doc(invitationId);
+
+    return firestore.runTransaction(async (transaction) => {
+      const document = await transaction.get(reference);
+      if (!document.exists) return false;
+
+      const data = document.data();
+      if (!data || data.status !== "PENDING") return false;
+
+      transaction.update(reference, {
+        status: "REDEEMED",
+        redeemedAt: FieldValue.serverTimestamp(),
+      });
+
+      return true;
     });
   }
 
