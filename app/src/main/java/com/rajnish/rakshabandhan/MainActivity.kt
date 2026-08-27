@@ -25,9 +25,7 @@ class MainActivity : FragmentActivity() {
 
         biometricAuthenticator = BiometricAuthenticator()
 
-        val authRepository = AuthRepositoryImpl(
-            context = applicationContext
-        )
+        val authRepository = AuthRepositoryImpl()
 
         val authViewModelFactory = AuthViewModelFactory(
             authRepository = authRepository
