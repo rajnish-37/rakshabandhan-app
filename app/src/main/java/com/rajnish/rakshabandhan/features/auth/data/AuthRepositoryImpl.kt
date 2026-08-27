@@ -1,6 +1,5 @@
 package com.rajnish.rakshabandhan.features.auth.data
 
-import android.content.Context
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.rajnish.rakshabandhan.features.auth.domain.AuthRepository
@@ -8,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AuthRepositoryImpl(
-    private val context: Context,
     private val invitationApi: InvitationApi = InvitationApi(),
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) : AuthRepository {
