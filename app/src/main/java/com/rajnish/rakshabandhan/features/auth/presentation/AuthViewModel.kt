@@ -27,25 +27,13 @@ class AuthViewModel(
             )
 
             try {
-                when {
-                    authRepository.hasAuthenticatedSession() -> {
-                        _uiState.value = _uiState.value.copy(
-                            authState = AuthState.Authenticated
-                        )
+                _uiState.value = _uiState.value.copy(
+                    authState = if (authRepository.hasFirebaseSession()) {
+                        AuthState.Unauthenticated
+                    } else {
+                        AuthState.EnrollmentRequired
                     }
-
-                    authRepository.hasFirebaseSession() -> {
-                        _uiState.value = _uiState.value.copy(
-                            authState = AuthState.Unauthenticated
-                        )
-                    }
-
-                    else -> {
-                        _uiState.value = _uiState.value.copy(
-                            authState = AuthState.EnrollmentRequired
-                        )
-                    }
-                }
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
@@ -86,7 +74,6 @@ class AuthViewModel(
             val result = authRepository.verifyInvitation(email, code)
 
             result.onSuccess {
-                authRepository.saveAuthenticatedSession()
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Authenticated
                 )
@@ -118,8 +105,6 @@ class AuthViewModel(
                     return@launch
                 }
 
-                authRepository.saveAuthenticatedSession()
-
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Authenticated
                 )
@@ -127,7 +112,7 @@ class AuthViewModel(
                 _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
                         message = e.message
-                            ?: "Unable to save authentication session"
+                            ?: "Unable to complete biometric authentication"
                     )
                 )
             }
