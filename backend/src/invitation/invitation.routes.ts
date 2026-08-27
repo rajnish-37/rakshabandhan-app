@@ -10,6 +10,8 @@ interface CreateInvitationBody {
 interface VerifyInvitationBody {
   email: string;
   code: string;
+  keyId: string;
+  publicKey: string;
 }
 
 export async function invitationRoutes(app: FastifyInstance): Promise<void> {
@@ -41,10 +43,15 @@ export async function invitationRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post<{ Body: VerifyInvitationBody }>("/invitations/verify", async (request, reply) => {
-    const { email, code } = request.body ?? {};
+    const { email, code, keyId, publicKey } = request.body ?? {};
 
     try {
-      const result = await verificationService.verifyInvitation(email, code);
+      const result = await verificationService.verifyInvitation(
+        email,
+        code,
+        keyId,
+        publicKey,
+      );
 
       return reply.code(200).send({
         status: "verified",
