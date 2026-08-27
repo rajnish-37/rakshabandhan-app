@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { auth } from "../firebase/admin.js";
 import { InvitationRepository } from "./invitation.repository.js";
 import { hashInvitationCode } from "./invitation-code.service.js";
 import { SisterAccountService } from "../sister/sister-account.service.js";
@@ -8,6 +9,7 @@ export interface VerifyInvitationResult {
   sisterId: string;
   email: string;
   authUid: string;
+  customToken: string;
 }
 
 export class InvitationVerificationService {
@@ -61,11 +63,17 @@ export class InvitationVerificationService {
       throw new Error("Invitation has already been redeemed");
     }
 
+    const customToken = await auth.createCustomToken(account.authUid, {
+      role: "SISTER",
+      sisterId: invitation.sisterId,
+    });
+
     return {
       invitationId: invitation.invitationId,
       sisterId: invitation.sisterId,
       email: invitation.email,
       authUid: account.authUid,
+      customToken,
     };
   }
 }
