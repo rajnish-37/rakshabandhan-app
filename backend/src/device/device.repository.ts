@@ -11,14 +11,14 @@ export interface DeviceKeyRecord {
 
 const COLLECTION = "deviceKeys";
 
-function toFirestore(record: DeviceKeyRecord) {
+function fromDocument(data: FirebaseFirestore.DocumentData): DeviceKeyRecord {
   return {
-    keyId: record.keyId,
-    sisterId: record.sisterId,
-    authUid: record.authUid,
-    publicKey: record.publicKey,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
+    keyId: data.keyId,
+    sisterId: data.sisterId,
+    authUid: data.authUid,
+    publicKey: data.publicKey,
+    createdAt: data.createdAt.toDate(),
+    updatedAt: data.updatedAt.toDate(),
   };
 }
 
@@ -68,25 +68,20 @@ export class DeviceRepository {
         return;
       }
 
-      transaction.create(target, toFirestore(record));
+      transaction.create(target, record);
     });
   }
 
   async findByKeyId(keyId: string): Promise<DeviceKeyRecord | null> {
-    const document = await this.collection.doc(keyId).get();
-    if (!document.exists) return null;
+    const snapshot = await this.collection
+      .where("keyId", "==", keyId)
+      .limit(1)
+      .get();
 
-    const data = document.data();
-    if (!data) return null;
+    const document = snapshot.docs.at(0);
+    if (!document) return null;
 
-    return {
-      keyId: data.keyId,
-      sisterId: data.sisterId,
-      authUid: data.authUid,
-      publicKey: data.publicKey,
-      createdAt: data.createdAt.toDate(),
-      updatedAt: data.updatedAt.toDate(),
-    };
+    return fromDocument(document.data());
   }
 
   async findBySisterId(sisterId: string): Promise<DeviceKeyRecord | null> {
@@ -98,14 +93,6 @@ export class DeviceRepository {
     const document = snapshot.docs.at(0);
     if (!document) return null;
 
-    const data = document.data();
-    return {
-      keyId: data.keyId,
-      sisterId: data.sisterId,
-      authUid: data.authUid,
-      publicKey: data.publicKey,
-      createdAt: data.createdAt.toDate(),
-      updatedAt: data.updatedAt.toDate(),
-    };
+    return fromDocument(document.data());
   }
 }
