@@ -1,8 +1,8 @@
 package com.rajnish.rakshabandhan
 
 import android.os.Bundle
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
@@ -35,7 +35,6 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             RakshaBandhanTheme {
-
                 val authViewModel: AuthViewModel = viewModel(
                     factory = authViewModelFactory
                 )
@@ -44,9 +43,10 @@ class MainActivity : FragmentActivity() {
 
                 AuthScreen(
                     uiState = uiState,
-
+                    onEmailChanged = authViewModel::updateEmail,
+                    onCodeChanged = authViewModel::updateCode,
+                    onVerifyInvitation = authViewModel::verifyInvitation,
                     onAuthenticate = {
-
                         if (!biometricAuthenticator.canAuthenticate(this)) {
                             authViewModel.onAuthenticationError(
                                 "Strong biometric authentication is not available on this device."
@@ -58,22 +58,15 @@ class MainActivity : FragmentActivity() {
 
                         biometricAuthenticator.authenticate(
                             activity = this,
-
                             onSuccess = {
                                 authViewModel.onAuthenticationSuccess()
                             },
-
                             onError = { errorMessage ->
-                                authViewModel.onAuthenticationError(
-                                    errorMessage
-                                )
+                                authViewModel.onAuthenticationError(errorMessage)
                             }
                         )
                     },
-
-                    onRetry = {
-                        authViewModel.resetError()
-                    }
+                    onRetry = authViewModel::resetError
                 )
             }
         }
