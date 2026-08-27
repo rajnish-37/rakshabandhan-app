@@ -4,6 +4,8 @@ interface AuthRepository {
 
     suspend fun hasAuthenticatedSession(): Boolean
 
+    suspend fun verifyInvitation(email: String, code: String): Result<Unit>
+
     suspend fun saveAuthenticatedSession()
 
     suspend fun clearAuthenticatedSession()
