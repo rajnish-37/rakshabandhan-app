@@ -25,11 +25,7 @@ export class DeviceService {
 
     const existing = await this.repository.findBySisterId(input.sisterId);
     if (existing && existing.authUid !== input.authUid) {
-      throw new Error("Sister already has a device registered");
-    }
-
-    if (existing && existing.keyId !== input.keyId) {
-      throw new Error("Sister already has a different device key registered");
+      throw new Error("Sister already has a device registered to a different identity");
     }
 
     await this.repository.register({
