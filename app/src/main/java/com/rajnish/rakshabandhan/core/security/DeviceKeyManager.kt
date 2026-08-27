@@ -55,7 +55,7 @@ class DeviceKeyManager {
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(true)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES_R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             builder.setUserAuthenticationParameters(
                 0,
                 KeyProperties.AUTH_BIOMETRIC_STRONG,
