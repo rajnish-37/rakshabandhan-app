@@ -78,6 +78,7 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                     },
+                    onSignOut = authViewModel::clearSession,
                     onRetry = authViewModel::resetError
                 )
             }
