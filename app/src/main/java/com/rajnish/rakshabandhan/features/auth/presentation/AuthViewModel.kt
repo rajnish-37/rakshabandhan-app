@@ -22,22 +22,32 @@ class AuthViewModel(
 
     fun checkAuthenticationSession() {
         viewModelScope.launch {
-            _uiState.value = AuthUiState(
+            _uiState.value = _uiState.value.copy(
                 authState = AuthState.Initializing
             )
 
             try {
-                val hasSession = authRepository.hasAuthenticatedSession()
-
-                _uiState.value = AuthUiState(
-                    authState = if (hasSession) {
-                        AuthState.Authenticated
-                    } else {
-                        AuthState.Unauthenticated
+                when {
+                    authRepository.hasAuthenticatedSession() -> {
+                        _uiState.value = _uiState.value.copy(
+                            authState = AuthState.Authenticated
+                        )
                     }
-                )
+
+                    authRepository.hasFirebaseSession() -> {
+                        _uiState.value = _uiState.value.copy(
+                            authState = AuthState.Unauthenticated
+                        )
+                    }
+
+                    else -> {
+                        _uiState.value = _uiState.value.copy(
+                            authState = AuthState.EnrollmentRequired
+                        )
+                    }
+                }
             } catch (e: Exception) {
-                _uiState.value = AuthUiState(
+                _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
                         message = e.message
                             ?: "Unable to check authentication session"
@@ -47,8 +57,51 @@ class AuthViewModel(
         }
     }
 
+    fun updateEmail(email: String) {
+        _uiState.value = _uiState.value.copy(email = email)
+    }
+
+    fun updateCode(code: String) {
+        _uiState.value = _uiState.value.copy(code = code.uppercase())
+    }
+
+    fun verifyInvitation() {
+        val state = _uiState.value
+        val email = state.email.trim()
+        val code = state.code.trim()
+
+        if (email.isBlank() || !email.contains("@")) {
+            onAuthenticationError("Enter a valid email address")
+            return
+        }
+
+        if (code.isBlank()) {
+            onAuthenticationError("Enter the invitation code")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(authState = AuthState.Enrolling)
+
+            val result = authRepository.verifyInvitation(email, code)
+
+            result.onSuccess {
+                authRepository.saveAuthenticatedSession()
+                _uiState.value = _uiState.value.copy(
+                    authState = AuthState.Authenticated
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    authState = AuthState.Error(
+                        message = error.message ?: "Unable to verify invitation"
+                    )
+                )
+            }
+        }
+    }
+
     fun setAuthenticating() {
-        _uiState.value = AuthUiState(
+        _uiState.value = _uiState.value.copy(
             authState = AuthState.Authenticating
         )
     }
@@ -56,13 +109,22 @@ class AuthViewModel(
     fun onAuthenticationSuccess() {
         viewModelScope.launch {
             try {
+                if (!authRepository.hasFirebaseSession()) {
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Error(
+                            message = "Firebase session is unavailable. Complete invitation verification first."
+                        )
+                    )
+                    return@launch
+                }
+
                 authRepository.saveAuthenticatedSession()
 
-                _uiState.value = AuthUiState(
+                _uiState.value = _uiState.value.copy(
                     authState = AuthState.Authenticated
                 )
             } catch (e: Exception) {
-                _uiState.value = AuthUiState(
+                _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
                         message = e.message
                             ?: "Unable to save authentication session"
@@ -73,7 +135,7 @@ class AuthViewModel(
     }
 
     fun onAuthenticationError(message: String) {
-        _uiState.value = AuthUiState(
+        _uiState.value = _uiState.value.copy(
             authState = AuthState.Error(
                 message = message
             )
@@ -81,9 +143,7 @@ class AuthViewModel(
     }
 
     fun resetError() {
-        _uiState.value = AuthUiState(
-            authState = AuthState.Unauthenticated
-        )
+        checkAuthenticationSession()
     }
 
     fun clearSession() {
@@ -91,11 +151,13 @@ class AuthViewModel(
             try {
                 authRepository.clearAuthenticatedSession()
 
-                _uiState.value = AuthUiState(
-                    authState = AuthState.Unauthenticated
+                _uiState.value = _uiState.value.copy(
+                    authState = AuthState.EnrollmentRequired,
+                    email = "",
+                    code = "",
                 )
             } catch (e: Exception) {
-                _uiState.value = AuthUiState(
+                _uiState.value = _uiState.value.copy(
                     authState = AuthState.Error(
                         message = e.message
                             ?: "Unable to clear authentication session"
