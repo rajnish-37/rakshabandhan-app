@@ -15,7 +15,7 @@ class InvitationCodeGenerator(
 
     companion object {
         private const val ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        private const val CODE_LENGTH = 12
+        private const val CODE_LENGTH = 16
     }
 
     fun generate(): String = buildString(CODE_LENGTH) {
