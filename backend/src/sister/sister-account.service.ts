@@ -62,17 +62,21 @@ export class SisterAccountService {
           disabled: false,
         });
       }
+    }
 
-      const existingSisterId = user.customClaims?.sisterId;
-      const existingRole = user.customClaims?.role;
+    const existingSisterId = user.customClaims?.sisterId;
+    const existingRole = user.customClaims?.role;
 
-      if (existingSisterId && existingSisterId !== normalizedSisterId) {
-        throw new Error("Email is already linked to a different sister ID");
-      }
+    if (existingSisterId && existingSisterId !== normalizedSisterId) {
+      throw new Error("Email is already linked to a different sister ID");
+    }
 
-      if (existingRole && existingRole !== "SISTER") {
-        throw new Error("Email is already linked to a different account role");
-      }
+    if (existingRole && existingRole !== "SISTER") {
+      throw new Error("Email is already linked to a different account role");
+    }
+
+    if (!user.emailVerified) {
+      user = await auth.updateUser(user.uid, { emailVerified: true });
     }
 
     await auth.setCustomUserClaims(user.uid, {
