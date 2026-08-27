@@ -38,6 +38,23 @@ export class DeviceRepository {
     });
   }
 
+  async findByKeyId(keyId: string): Promise<DeviceKeyRecord | null> {
+    const document = await this.collection.doc(keyId).get();
+    if (!document.exists) return null;
+
+    const data = document.data();
+    if (!data) return null;
+
+    return {
+      keyId: data.keyId,
+      sisterId: data.sisterId,
+      authUid: data.authUid,
+      publicKey: data.publicKey,
+      createdAt: data.createdAt.toDate(),
+      updatedAt: data.updatedAt.toDate(),
+    };
+  }
+
   async findBySisterId(sisterId: string): Promise<DeviceKeyRecord | null> {
     const snapshot = await this.collection
       .where("sisterId", "==", sisterId)
