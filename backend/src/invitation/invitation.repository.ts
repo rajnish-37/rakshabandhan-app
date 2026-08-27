@@ -53,4 +53,10 @@ export class InvitationRepository {
       redeemedAt: FieldValue.serverTimestamp(),
     });
   }
+
+  async markRevoked(invitationId: string): Promise<void> {
+    await this.collection.doc(invitationId).update({
+      status: "REVOKED",
+    });
+  }
 }
