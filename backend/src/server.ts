@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import { config } from "./config.js";
 import { checkFirestoreConnection } from "./firebase/health.js";
 import { invitationRoutes } from "./invitation/invitation.routes.js";
+import { deviceRoutes } from "./device/device.routes.js";
 
 const app = Fastify({
   logger: true,
@@ -30,6 +31,7 @@ app.get("/health/firestore", async (_request, reply) => {
 });
 
 await invitationRoutes(app);
+await deviceRoutes(app);
 
 const start = async (): Promise<void> => {
   try {
