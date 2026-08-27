@@ -10,6 +10,7 @@ import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.Signature
 
 class DeviceKeyManager {
 
@@ -30,6 +31,15 @@ class DeviceKeyManager {
         )
     }
 
+    fun createSignature(): Signature {
+        val privateKey = loadKeyPair()?.private
+            ?: throw IllegalStateException("Device signing key is not enrolled")
+
+        return Signature.getInstance("SHA256withECDSA").apply {
+            initSign(privateKey)
+        }
+    }
+
     private fun generateKeyPair(): KeyPair {
         val generator = KeyPairGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_EC,
@@ -41,11 +51,11 @@ class DeviceKeyManager {
             KeyProperties.PURPOSE_SIGN,
         )
             .setAlgorithmParameterSpec(java.security.spec.ECGenParameterSpec("secp256r1"))
-            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+            .setDigests(KeyProperties.DIGEST_SHA256)
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(true)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES_R) {
             builder.setUserAuthenticationParameters(
                 0,
                 KeyProperties.AUTH_BIOMETRIC_STRONG,
