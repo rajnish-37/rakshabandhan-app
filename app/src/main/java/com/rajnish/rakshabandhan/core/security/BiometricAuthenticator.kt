@@ -5,6 +5,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import java.security.Signature
 
 class BiometricAuthenticator {
 
@@ -45,8 +46,6 @@ class BiometricAuthenticator {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    // A failed biometric attempt does not necessarily
-                    // mean the entire authentication flow has failed.
                 }
             }
         )
@@ -58,5 +57,58 @@ class BiometricAuthenticator {
             .build()
 
         biometricPrompt.authenticate(promptInfo)
+    }
+
+    fun authenticateForSignature(
+        activity: FragmentActivity,
+        signature: Signature,
+        challenge: String,
+        onSuccess: (ByteArray) -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        signature.update(challenge.toByteArray(Charsets.UTF_8))
+
+        val executor = ContextCompat.getMainExecutor(activity)
+        val biometricPrompt = BiometricPrompt(
+            activity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    super.onAuthenticationSucceeded(result)
+                    try {
+                        val signedChallenge = result.cryptoObject?.signature?.sign()
+                            ?: throw IllegalStateException("Biometric signature was unavailable")
+                        onSuccess(signedChallenge)
+                    } catch (e: Exception) {
+                        onError(e.message ?: "Unable to sign authentication challenge")
+                    }
+                }
+
+                override fun onAuthenticationError(
+                    errorCode: Int,
+                    errString: CharSequence
+                ) {
+                    super.onAuthenticationError(errorCode, errString)
+                    onError(errString.toString())
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                }
+            }
+        )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Sign in")
+            .setSubtitle("Verify your identity with biometrics")
+            .setNegativeButtonText("Cancel")
+            .build()
+
+        biometricPrompt.authenticate(
+            promptInfo,
+            BiometricPrompt.CryptoObject(signature)
+        )
     }
 }
