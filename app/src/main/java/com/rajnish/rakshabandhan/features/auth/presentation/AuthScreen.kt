@@ -23,6 +23,7 @@ fun AuthScreen(
     onCodeChanged: (String) -> Unit,
     onVerifyInvitation: () -> Unit,
     onAuthenticate: () -> Unit,
+    onSignOut: () -> Unit,
     onRetry: () -> Unit
 ) {
     Column(
@@ -69,8 +70,17 @@ fun AuthScreen(
 
             AuthState.Unauthenticated -> {
                 Text("Authentication Required")
-                Button(onClick = onAuthenticate) {
+                Button(
+                    onClick = onAuthenticate,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
                     Text("Authenticate")
+                }
+                Button(
+                    onClick = onSignOut,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text("DEV: Sign Out")
                 }
             }
 
@@ -84,6 +94,12 @@ fun AuthScreen(
 
             AuthState.Authenticated -> {
                 Text("Authenticated")
+                Button(
+                    onClick = onSignOut,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text("DEV: Sign Out")
+                }
             }
 
             is AuthState.Error -> {
