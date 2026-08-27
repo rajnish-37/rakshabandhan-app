@@ -3,7 +3,6 @@ import { auth } from "../firebase/admin.js";
 import { DeviceService } from "./device.service.js";
 
 interface RegisterDeviceBody {
-  sisterId: string;
   keyId: string;
   publicKey: string;
 }
@@ -25,13 +24,13 @@ export async function deviceRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterDeviceBody }>("/devices/register", async (request, reply) => {
     try {
       const decodedToken = await auth.verifyIdToken(bearerToken(request));
-      const { sisterId, keyId, publicKey } = request.body ?? {};
+      const { keyId, publicKey } = request.body ?? {};
+      const sisterId = decodedToken.sisterId;
 
-      const claimedSisterId = decodedToken.sisterId;
-      if (decodedToken.role !== "SISTER" || claimedSisterId !== sisterId) {
+      if (decodedToken.role !== "SISTER" || typeof sisterId !== "string" || !sisterId) {
         return reply.code(403).send({
           status: "error",
-          message: "Firebase identity is not authorized for this sister",
+          message: "Firebase identity is not authorized for device registration",
         });
       }
 
@@ -49,7 +48,8 @@ export async function deviceRoutes(app: FastifyInstance): Promise<void> {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to register device key";
-      return reply.code(message === "Firebase ID token is required" ? 401 : 400).send({
+      const statusCode = message === "Firebase ID token is required" ? 401 : 400;
+      return reply.code(statusCode).send({
         status: "error",
         message,
       });
