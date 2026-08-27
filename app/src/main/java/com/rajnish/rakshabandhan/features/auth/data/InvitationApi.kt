@@ -15,7 +15,12 @@ internal data class InvitationSession(
 
 internal class InvitationApi {
 
-    fun verifyInvitation(email: String, code: String): InvitationSession {
+    fun verifyInvitation(
+        email: String,
+        code: String,
+        keyId: String,
+        publicKey: String,
+    ): InvitationSession {
         val connection = (URL("${BuildConfig.BACKEND_BASE_URL}/invitations/verify")
             .openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
@@ -30,6 +35,8 @@ internal class InvitationApi {
             val payload = JSONObject()
                 .put("email", email.trim())
                 .put("code", code.trim().uppercase())
+                .put("keyId", keyId)
+                .put("publicKey", publicKey)
                 .toString()
 
             connection.outputStream.use { output ->
