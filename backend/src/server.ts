@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { config } from "./config.js";
+import { checkFirestoreConnection } from "./firebase/health.js";
 
 const app = Fastify({
   logger: true,
@@ -9,6 +10,23 @@ app.get("/health", async () => ({
   status: "ok",
   service: "rakshabandhan-backend",
 }));
+
+app.get("/health/firestore", async (_request, reply) => {
+  try {
+    await checkFirestoreConnection();
+    return {
+      status: "ok",
+      service: "firestore",
+    };
+  } catch (error) {
+    app.log.error(error, "Firestore health check failed");
+    return reply.code(503).send({
+      status: "error",
+      service: "firestore",
+      message: "Firestore connection failed",
+    });
+  }
+});
 
 const start = async (): Promise<void> => {
   try {
