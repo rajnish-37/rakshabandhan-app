@@ -11,17 +11,51 @@ export interface DeviceKeyRecord {
 
 const COLLECTION = "deviceKeys";
 
+function toFirestore(record: DeviceKeyRecord) {
+  return {
+    keyId: record.keyId,
+    sisterId: record.sisterId,
+    authUid: record.authUid,
+    publicKey: record.publicKey,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+  };
+}
+
 export class DeviceRepository {
   private readonly collection = firestore.collection(COLLECTION);
 
   async register(record: DeviceKeyRecord): Promise<void> {
-    const ref = this.collection.doc(record.keyId);
+    const existing = await this.findBySisterId(record.sisterId);
+
+    if (existing && existing.authUid !== record.authUid) {
+      throw new Error("Sister already has a device registered to a different identity");
+    }
+
+    const target = existing
+      ? this.collection.doc(existing.keyId)
+      : this.collection.doc(record.keyId);
 
     await firestore.runTransaction(async (transaction) => {
-      const existing = await transaction.get(ref);
+      const current = await transaction.get(target);
 
-      if (existing.exists) {
-        const data = existing.data();
+      if (existing) {
+        if (!current.exists) {
+          throw new Error("Existing device registration could not be found");
+        }
+
+        transaction.update(target, {
+          keyId: record.keyId,
+          sisterId: record.sisterId,
+          authUid: record.authUid,
+          publicKey: record.publicKey,
+          updatedAt: record.updatedAt,
+        });
+        return;
+      }
+
+      if (current.exists) {
+        const data = current.data();
         if (
           data?.authUid !== record.authUid ||
           data?.sisterId !== record.sisterId ||
@@ -30,11 +64,11 @@ export class DeviceRepository {
           throw new Error("Device key ID is already registered to a different identity");
         }
 
-        transaction.update(ref, { updatedAt: record.updatedAt });
+        transaction.update(target, { updatedAt: record.updatedAt });
         return;
       }
 
-      transaction.create(ref, record);
+      transaction.create(target, toFirestore(record));
     });
   }
 
