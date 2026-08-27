@@ -6,7 +6,7 @@ import com.rajnish.rakshabandhan.features.auth.domain.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AuthRepositoryImpl(
+class AuthRepositoryImpl internal constructor(
     private val invitationApi: InvitationApi = InvitationApi(),
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) : AuthRepository {
