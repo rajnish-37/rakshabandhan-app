@@ -22,6 +22,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "BACKEND_BASE_URL",
+                "\"${project.findProperty("RAKSHA_BACKEND_BASE_URL") ?: "http://10.0.2.2:8080"}\""
+            )
+        }
         release {
             optimization {
                 enable = false
@@ -34,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
