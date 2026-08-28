@@ -18,7 +18,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Redeem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,7 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.rajnish.rakshabandhan.ui.theme.RakhiBlush
 import com.rajnish.rakshabandhan.ui.theme.RakhiMaroon
 import com.rajnish.rakshabandhan.ui.theme.RakhiMuted
 import java.text.NumberFormat
@@ -85,12 +83,7 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(
-                    imageVector = Icons.Outlined.Favorite,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(12.dp).width(24.dp),
-                )
+                Icon(Icons.Outlined.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(12.dp).width(24.dp))
             }
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text("राखी का दिन", style = MaterialTheme.typography.labelLarge, color = RakhiMuted)
@@ -98,11 +91,7 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(30.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 26.dp)) {
                 Text("कुछ रिश्ते", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Text("वक़्त के साथ पुराने नहीं होते…", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 6.dp))
@@ -112,18 +101,6 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
         }
 
         GiftCard(data.gift, data.claim, viewModel)
-
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Row(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = RakhiBlush) {
-                    Icon(Icons.Outlined.Lock, contentDescription = null, tint = RakhiMaroon, modifier = Modifier.padding(9.dp))
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text("आपकी जगह सुरक्षित है", fontWeight = FontWeight.SemiBold)
-                    Text("Trusted device authentication active है।", style = MaterialTheme.typography.bodySmall, color = RakhiMuted, modifier = Modifier.padding(top = 3.dp))
-                }
-            }
-        }
 
         Text("राखी बाँधने को हाथ दूर हों तो क्या…\nदिलों की डोर तो पास ही रहती है। ❤️", modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, textAlign = TextAlign.Center, lineHeight = 22.sp)
     }
@@ -182,7 +159,6 @@ private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.dat
         if (submitting) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
         Text(if (submitting) "बस भेज रहे हैं…" else "मेरा तोहफ़ा भेज दो", fontWeight = FontWeight.SemiBold)
     }
-    Text("Payment भैया manually करेंगे।", style = MaterialTheme.typography.labelMedium, color = RakhiMuted, modifier = Modifier.padding(top = 10.dp))
 }
 
 @Composable
