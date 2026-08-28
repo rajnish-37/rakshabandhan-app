@@ -16,6 +16,7 @@ export class SisterRepository {
 
     return {
       sisterId: data.sisterId,
+      name: data.name ?? "Sister",
       email: data.email,
       authUid: data.authUid,
       status: data.status,
@@ -43,6 +44,7 @@ export class SisterRepository {
         }
 
         transaction.update(reference, {
+          name: profile.name,
           status: profile.status,
           updatedAt: profile.updatedAt,
         });
@@ -51,6 +53,7 @@ export class SisterRepository {
 
       transaction.create(reference, {
         sisterId: profile.sisterId,
+        name: profile.name,
         email: profile.email,
         authUid: profile.authUid,
         status: profile.status,
