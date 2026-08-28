@@ -3,10 +3,26 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val configuredBackendBaseUrl = project.findProperty("RAKSHA_BACKEND_BASE_URL")
-    ?.toString()
-    ?.trim()
-    ?.trimEnd('/')
+fun configuredBackendUrl(): String? {
+    project.findProperty("RAKSHA_BACKEND_BASE_URL")?.toString()?.trim()?.trimEnd('/')?.takeIf { it.isNotBlank() }?.let { return it }
+
+    // Keep the Admin app aligned with the existing Sister app's local configuration
+    // when the URL is currently stored in app/gradle.properties on the developer machine.
+    val sisterProperties = rootProject.file("app/gradle.properties")
+    if (sisterProperties.isFile) {
+        val properties = java.util.Properties()
+        sisterProperties.inputStream().use(properties::load)
+        properties.getProperty("RAKSHA_BACKEND_BASE_URL")
+            ?.trim()
+            ?.trimEnd('/')
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+    }
+
+    return null
+}
+
+val configuredBackendBaseUrl = configuredBackendUrl()
 
 android {
     namespace = "com.rajnish.rakshabandhan.admin"
