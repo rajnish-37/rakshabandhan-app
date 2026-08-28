@@ -88,6 +88,7 @@ class MainActivity : FragmentActivity() {
                         }
                     },
                     onRetry = authViewModel::resetError,
+                    previewScreenTwo = SCREEN_TWO_PREVIEW,
                 )
             }
         }
