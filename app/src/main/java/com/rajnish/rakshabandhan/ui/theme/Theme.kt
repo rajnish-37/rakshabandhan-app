@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
     primary = RakhiRose,
@@ -53,8 +54,6 @@ fun RakshaBandhanTheme(
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            // Opt-in remains available for future use, while the default preserves
-            // the intentional Rakhi visual identity across devices.
             if (darkTheme) DarkColorScheme else LightColorScheme
         }
         darkTheme -> DarkColorScheme
