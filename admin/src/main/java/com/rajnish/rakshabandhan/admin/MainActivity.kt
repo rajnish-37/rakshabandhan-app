@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
         var loadingGift by remember { mutableStateOf(false) }
         var savingGift by remember { mutableStateOf(false) }
         var sendingInvitation by remember { mutableStateOf(false) }
-        var adminApiKey by remember { mutableStateOf("") }
+        var adminApiKey by remember { mutableStateOf(BuildConfig.ADMIN_API_KEY) }
         var claims by remember { mutableStateOf<List<AdminClaim>>(emptyList()) }
         var selectedClaim by remember { mutableStateOf<AdminClaim?>(null) }
         var loadingClaims by remember { mutableStateOf(false) }
@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
         fun refreshClaims() {
             val key = adminApiKey.trim()
             if (key.isBlank()) {
-                message = "Enter the Admin API key to load pending claims."
+                message = "Admin API key is not configured for this debug build."
                 return
             }
             loadingClaims = true
@@ -320,7 +320,7 @@ class MainActivity : ComponentActivity() {
                                         onClick = {
                                             val key = adminApiKey.trim()
                                             if (key.isBlank()) {
-                                                message = "Enter the Admin API key."
+                                                message = "Admin API key is not configured for this debug build."
                                                 return@Button
                                             }
                                             markingPaid = true
