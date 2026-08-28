@@ -8,13 +8,14 @@ internal data class SisterOption(val id: String, val name: String, val email: St
 internal data class SisterListResult(val success: Boolean, val message: String, val sisters: List<SisterOption>)
 
 internal object SisterApi {
-    fun getSisters(): SisterListResult {
+    fun getSisters(adminApiKey: String): SisterListResult {
         val backendUrl = BuildConfig.BACKEND_BASE_URL.trimEnd('/')
         val connection = (URL("$backendUrl/admin/sisters").openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 10_000
             readTimeout = 15_000
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Admin-Api-Key", adminApiKey.trim())
         }
         return try {
             val status = connection.responseCode

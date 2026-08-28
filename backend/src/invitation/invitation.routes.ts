@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { requireAdminAuthorization } from "../security/admin-auth.js";
 import { InMemoryRateLimiter, requireEmail, requireString } from "../security/request-guard.js";
 import { InvitationService } from "./invitation.service.js";
 import { InvitationVerificationService } from "./invitation-verification.service.js";
@@ -22,6 +23,9 @@ export async function invitationRoutes(app: FastifyInstance): Promise<void> {
   const verifyLimiter = new InMemoryRateLimiter(8, 60_000);
 
   app.post<{ Body: CreateInvitationBody }>("/invitations", async (request, reply) => {
+    const authorizationError = requireAdminAuthorization(request);
+    if (authorizationError) return reply.code(401).send(authorizationError);
+
     if (!createLimiter.allow(`create:${request.ip}`)) {
       return reply.code(429).send({ status: "error", message: "Too many requests" });
     }

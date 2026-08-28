@@ -3,10 +3,10 @@ package com.rajnish.rakshabandhan
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
 import com.rajnish.rakshabandhan.core.security.BiometricAuthenticator
 import com.rajnish.rakshabandhan.core.security.DeviceKeyManager
 import com.rajnish.rakshabandhan.features.auth.data.AuthRepositoryImpl

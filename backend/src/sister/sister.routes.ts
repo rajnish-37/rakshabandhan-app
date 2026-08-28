@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { auth } from "../firebase/admin.js";
+import { requireAdminAuthorization } from "../security/admin-auth.js";
 import { SisterHomeService } from "./home.service.js";
 import { SisterRepository } from "./sister.repository.js";
 
@@ -39,7 +40,10 @@ export async function sisterRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  app.get("/admin/sisters", async (_request, reply) => {
+  app.get("/admin/sisters", async (request, reply) => {
+    const authorizationError = requireAdminAuthorization(request);
+    if (authorizationError) return reply.code(401).send(authorizationError);
+
     try {
       const profiles = await repository.findAll();
       const byId = new Map(profiles.map((profile) => [profile.sisterId, profile]));

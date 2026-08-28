@@ -10,7 +10,7 @@ internal data class InvitationResult(
 )
 
 internal object InvitationApi {
-    fun createInvitation(sisterId: String, email: String): InvitationResult {
+    fun createInvitation(sisterId: String, email: String, adminApiKey: String): InvitationResult {
         val backendUrl = BuildConfig.BACKEND_BASE_URL.trimEnd('/')
         val connection = (URL("$backendUrl/invitations").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
@@ -19,6 +19,7 @@ internal object InvitationApi {
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Admin-Api-Key", adminApiKey.trim())
         }
 
         return try {
