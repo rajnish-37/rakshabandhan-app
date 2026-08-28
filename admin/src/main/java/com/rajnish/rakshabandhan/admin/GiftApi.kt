@@ -18,13 +18,14 @@ internal data class GiftResult(
 )
 
 internal object GiftApi {
-    fun getGift(sisterId: String): GiftResult {
+    fun getGift(sisterId: String, adminApiKey: String): GiftResult {
         val backendUrl = BuildConfig.BACKEND_BASE_URL.trimEnd('/')
-        val connection = (URL("$backendUrl/sisters/$sisterId/gift").openConnection() as HttpURLConnection).apply {
+        val connection = (URL("$backendUrl/admin/sisters/$sisterId/gift").openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 10_000
             readTimeout = 15_000
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Admin-Api-Key", adminApiKey.trim())
         }
         return try {
             val statusCode = connection.responseCode
@@ -43,7 +44,7 @@ internal object GiftApi {
         } finally { connection.disconnect() }
     }
 
-    fun configureGift(sisterId: String, amount: String, eligible: Boolean): GiftResult {
+    fun configureGift(sisterId: String, amount: String, eligible: Boolean, adminApiKey: String): GiftResult {
         val backendUrl = BuildConfig.BACKEND_BASE_URL.trimEnd('/')
         val connection = (URL("$backendUrl/admin/gift").openConnection() as HttpURLConnection).apply {
             requestMethod = "PUT"
@@ -52,6 +53,7 @@ internal object GiftApi {
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Admin-Api-Key", adminApiKey.trim())
         }
         return try {
             val numericAmount = amount.toDoubleOrNull() ?: return GiftResult(false, "Enter a valid gift amount.")
