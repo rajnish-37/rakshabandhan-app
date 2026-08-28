@@ -5,36 +5,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class GiftClaimData(
-    val claimId: String,
-    val sisterId: String,
-    val sisterName: String,
-    val sisterEmail: String,
-    val giftId: String,
-    val amount: Double,
-    val currency: String,
-    val upiId: String,
-    val status: String,
-    val createdAt: String,
-    val updatedAt: String,
-    val paidAt: String?,
-    val paidBy: String?,
-)
-
-internal sealed interface ClaimResult {
-    data class Success(val claim: GiftClaimData?) : ClaimResult
-    data class Failure(val message: String) : ClaimResult
-}
-
 internal class ClaimApi {
-    fun getMyClaim(idToken: String): ClaimResult {
-        val connection = openConnection("/claims/me", "GET", idToken)
-        return execute(connection, null) { json ->
-            val claim = json.optJSONObject("claim")?.let(::parseClaim)
-            ClaimResult.Success(claim)
-        }
-    }
-
     fun submitClaim(idToken: String, upiId: String): ClaimResult {
         val connection = openConnection("/claims", "POST", idToken).apply { doOutput = true }
         val payload = JSONObject().put("upiId", upiId.trim()).toString()
@@ -59,20 +30,15 @@ internal class ClaimApi {
         parser: (JSONObject) -> ClaimResult,
     ): ClaimResult {
         return try {
-            payload?.let { connection.outputStream.use { stream -> stream.write(it.toByteArray(Charsets.UTF_8)) } }
+            payload?.let { body -> connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) } }
             val statusCode = connection.responseCode
             val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
             val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
             val json = runCatching { JSONObject(body) }.getOrNull()
             if (statusCode !in 200..299 || json == null) {
-                ClaimResult.Failure(
-                    json?.optString("message")?.takeIf { it.isNotBlank() }
-                        ?: "Unable to process gift claim.",
-                )
-            } else {
-                parser(json)
-            }
-        } catch (error: Exception) {
+                ClaimResult.Failure(json?.optString("message")?.takeIf { it.isNotBlank() } ?: "Unable to process gift claim.")
+            } else parser(json)
+        } catch (_: Exception) {
             ClaimResult.Failure("Unable to reach the backend. Please try again.")
         } finally {
             connection.disconnect()
