@@ -13,8 +13,6 @@ fun configuredBackendUrl(): String? {
         ?.takeIf { it.isNotBlank() }
         ?.let { return it }
 
-    // Keep the Admin app aligned with the existing Sister app's local configuration
-    // when the URL is currently stored in app/gradle.properties on the developer machine.
     val sisterProperties = rootProject.file("app/gradle.properties")
     if (sisterProperties.isFile) {
         val properties = Properties()
@@ -29,7 +27,31 @@ fun configuredBackendUrl(): String? {
     return null
 }
 
+fun configuredLocalAdminApiKey(): String? {
+    project.findProperty("RAKSHA_ADMIN_API_KEY")
+        ?.toString()
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?.let { return it }
+
+    val backendEnv = rootProject.file("backend/.env")
+    if (backendEnv.isFile) {
+        backendEnv.useLines { lines ->
+            lines.firstNotNullOfOrNull { line ->
+                val trimmed = line.trim()
+                if (trimmed.startsWith("ADMIN_API_KEY=")) {
+                    trimmed.substringAfter("=", "").trim().removeSurrounding("\"").removeSurrounding("'")
+                        .takeIf { it.isNotBlank() }
+                } else null
+            }
+        }?.let { return it }
+    }
+
+    return null
+}
+
 val configuredBackendBaseUrl = configuredBackendUrl()
+val configuredLocalAdminApiKey = configuredLocalAdminApiKey()
 
 android {
     namespace = "com.rajnish.rakshabandhan.admin"
@@ -48,11 +70,13 @@ android {
         debug {
             manifestPlaceholders["allowCleartextTraffic"] = true
             buildConfigField("String", "BACKEND_BASE_URL", "\"${configuredBackendBaseUrl ?: "http://10.0.2.2:8080"}\"")
+            buildConfigField("String", "ADMIN_API_KEY", "\"${configuredLocalAdminApiKey?.replace("\\", "\\\\")?.replace("\"", "\\\"") ?: ""}\"")
         }
         release {
             manifestPlaceholders["allowCleartextTraffic"] = false
             optimization { enable = false }
             buildConfigField("String", "BACKEND_BASE_URL", "\"${configuredBackendBaseUrl ?: error("RAKSHA_BACKEND_BASE_URL must be configured for release builds")}\"")
+            buildConfigField("String", "ADMIN_API_KEY", "\"\"")
         }
     }
 

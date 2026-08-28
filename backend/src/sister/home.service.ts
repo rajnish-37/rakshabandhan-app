@@ -1,4 +1,5 @@
 import { auth } from "../firebase/admin.js";
+import { ClaimRepository } from "../claim/claim.repository.js";
 import { GiftRepository } from "../gift/gift.repository.js";
 import { SisterRepository } from "./sister.repository.js";
 
@@ -15,12 +16,28 @@ export interface SisterHomeData {
     claimEligible: boolean;
     claimDeadline: Date | null;
   } | null;
+  claim: {
+    claimId: string;
+    sisterId: string;
+    sisterName: string;
+    sisterEmail: string;
+    giftId: string;
+    amount: number;
+    currency: string;
+    upiId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    paidAt: Date | null;
+    paidBy: string | null;
+  } | null;
 }
 
 export class SisterHomeService {
   constructor(
     private readonly repository = new SisterRepository(),
     private readonly giftRepository = new GiftRepository(),
+    private readonly claimRepository = new ClaimRepository(),
   ) {}
 
   async getHome(authUid: string, claimedSisterId: string): Promise<SisterHomeData> {
@@ -38,6 +55,7 @@ export class SisterHomeService {
     }
 
     const gift = await this.giftRepository.findBySisterId(sisterId);
+    const claim = gift ? await this.claimRepository.findBySisterAndGift(sisterId, gift.giftId) : null;
 
     return {
       sisterId: profile.sisterId,
@@ -54,6 +72,7 @@ export class SisterHomeService {
             claimDeadline: gift.claimDeadline,
           }
         : null,
+      claim,
     };
   }
 }

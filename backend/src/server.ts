@@ -5,6 +5,7 @@ import { invitationRoutes } from "./invitation/invitation.routes.js";
 import { deviceRoutes } from "./device/device.routes.js";
 import { sisterRoutes } from "./sister/sister.routes.js";
 import { giftRoutes } from "./gift/gift.routes.js";
+import { claimRoutes } from "./claim/claim.routes.js";
 
 const app = Fastify({
   logger: true,
@@ -37,6 +38,7 @@ await invitationRoutes(app);
 await deviceRoutes(app);
 await sisterRoutes(app);
 await giftRoutes(app);
+await claimRoutes(app);
 
 const start = async (): Promise<void> => {
   try {
