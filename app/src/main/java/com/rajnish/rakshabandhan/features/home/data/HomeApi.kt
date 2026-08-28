@@ -5,14 +5,14 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal data class SisterHomeData(
+data class SisterHomeData(
     val sisterId: String,
     val email: String,
     val name: String,
     val enrollmentStatus: String,
 )
 
-internal class HomeApi {
+class HomeApi {
     fun getMe(idToken: String): SisterHomeData {
         val connection = (URL("${BuildConfig.BACKEND_BASE_URL}/me").openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
