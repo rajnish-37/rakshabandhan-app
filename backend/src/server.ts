@@ -10,6 +10,7 @@ import { claimRoutes } from "./claim/claim.routes.js";
 const app = Fastify({
   logger: true,
   bodyLimit: 64 * 1024,
+  trustProxy: true,
 });
 
 app.addHook("onSend", async (_request, reply) => {
@@ -17,6 +18,7 @@ app.addHook("onSend", async (_request, reply) => {
   reply.header("X-Content-Type-Options", "nosniff");
   reply.header("Referrer-Policy", "no-referrer");
   reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 });
 
 app.get("/health", async () => ({
