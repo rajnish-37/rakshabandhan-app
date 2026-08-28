@@ -12,7 +12,9 @@ interface AuthRepository {
 
     suspend fun completeDeviceLogin(challengeId: String, signature: ByteArray): Result<Unit>
 
-    suspend fun clearAuthenticatedSession()
+    suspend fun refreshFirebaseSession(forceRefresh: Boolean = false): Result<Unit>
+
+    suspend fun clearFirebaseSession()
 }
 
 data class DeviceChallenge(

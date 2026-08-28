@@ -14,6 +14,8 @@ sealed interface AuthState {
 
     data object Authenticated : AuthState
 
+    data object Offline : AuthState
+
     data class Error(
         val message: String
     ) : AuthState

@@ -6,6 +6,14 @@ import { deviceRoutes } from "./device/device.routes.js";
 
 const app = Fastify({
   logger: true,
+  bodyLimit: 64 * 1024,
+});
+
+app.addHook("onSend", async (_request, reply) => {
+  reply.header("Cache-Control", "no-store");
+  reply.header("X-Content-Type-Options", "nosniff");
+  reply.header("Referrer-Policy", "no-referrer");
+  reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 });
 
 app.get("/health", async () => ({

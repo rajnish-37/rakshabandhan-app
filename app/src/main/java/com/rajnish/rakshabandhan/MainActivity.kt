@@ -1,12 +1,12 @@
 package com.rajnish.rakshabandhan
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rajnish.rakshabandhan.core.security.BiometricAuthenticator
 import com.rajnish.rakshabandhan.core.security.DeviceKeyManager
 import com.rajnish.rakshabandhan.features.auth.data.AuthRepositoryImpl
@@ -19,6 +19,7 @@ class MainActivity : FragmentActivity() {
 
     private lateinit var biometricAuthenticator: BiometricAuthenticator
     private lateinit var deviceKeyManager: DeviceKeyManager
+    private lateinit var authViewModel: AuthViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +31,10 @@ class MainActivity : FragmentActivity() {
 
         val authRepository = AuthRepositoryImpl()
         val authViewModelFactory = AuthViewModelFactory(authRepository = authRepository)
+        authViewModel = ViewModelProvider(this, authViewModelFactory)[AuthViewModel::class.java]
 
         setContent {
             RakshaBandhanTheme {
-                val authViewModel: AuthViewModel = viewModel(factory = authViewModelFactory)
                 val uiState by authViewModel.uiState.collectAsState()
 
                 AuthScreen(
@@ -78,10 +79,16 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                     },
-                    onSignOut = authViewModel::clearSession,
-                    onRetry = authViewModel::resetError
+                    onRetry = authViewModel::resetError,
                 )
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::authViewModel.isInitialized) {
+            authViewModel.onAppForegrounded()
         }
     }
 }

@@ -3,6 +3,7 @@ import "dotenv/config";
 export const config = {
   port: Number(process.env.PORT ?? 8080),
   host: process.env.HOST ?? "0.0.0.0",
+  adminApiKey: process.env.ADMIN_API_KEY,
 } as const;
 
 export function firebaseConfig() {

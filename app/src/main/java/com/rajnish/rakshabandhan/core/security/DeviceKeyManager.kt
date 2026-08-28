@@ -21,10 +21,16 @@ class DeviceKeyManager {
 
     private val alias = "raksha_device_signing_key"
 
-    fun hasKey(): Boolean = loadKeyPair() != null
+    fun hasKey(): Boolean = runCatching {
+        loadKeyPair() != null
+    }.getOrDefault(false)
 
     fun ensureKey(): RegistrationKey {
-        val keyPair = loadKeyPair() ?: generateKeyPair()
+        val keyPair = runCatching { loadKeyPair() }.getOrNull() ?: run {
+            deleteExistingKey()
+            generateKeyPair()
+        }
+
         return RegistrationKey(
             keyId = keyId(keyPair.public),
             publicKey = Base64.encodeToString(keyPair.public.encoded, Base64.NO_WRAP),
@@ -74,9 +80,27 @@ class DeviceKeyManager {
             load(null)
         }
 
-        val privateKey = keyStore.getKey(alias, null) as? PrivateKey ?: return null
+        if (!keyStore.containsAlias(alias)) return null
+
+        val privateKey = try {
+            keyStore.getKey(alias, null) as? PrivateKey
+        } catch (_: Exception) {
+            return null
+        } ?: return null
+
         val publicKey = keyStore.getCertificate(alias)?.publicKey ?: return null
         return KeyPair(publicKey, privateKey)
+    }
+
+    private fun deleteExistingKey() {
+        runCatching {
+            KeyStore.getInstance("AndroidKeyStore").apply {
+                load(null)
+                if (containsAlias(alias)) {
+                    deleteEntry(alias)
+                }
+            }
+        }
     }
 
     private fun keyId(publicKey: PublicKey): String =
