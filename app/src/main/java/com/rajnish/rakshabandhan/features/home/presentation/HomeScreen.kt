@@ -1,6 +1,5 @@
 package com.rajnish.rakshabandhan.features.home.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,11 +34,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -47,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rajnish.rakshabandhan.ui.theme.RakhiBlush
-import com.rajnish.rakshabandhan.ui.theme.RakhiGold
 import com.rajnish.rakshabandhan.ui.theme.RakhiMaroon
 import com.rajnish.rakshabandhan.ui.theme.RakhiMuted
 import java.text.NumberFormat
@@ -65,6 +62,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             HomeUiState.Unauthorized -> ActionHome("Session समाप्त हो गया", "अपनी पहचान फिर से verify कीजिए।", "फिर कोशिश करें", viewModel::load)
         }
     }
+}
+
+private fun greetingFor(name: String): String = when (name.trim().lowercase(Locale.ROOT)) {
+    "nisha" -> "Happy Rakhi, Nisha Didi ❤️"
+    "neha" -> "Happy Rakhi, Neha Didi ❤️"
+    "mona" -> "Happy Rakhi, Mona ❤️"
+    "khushi" -> "Happy Rakhi, Khushi ❤️"
+    else -> "Happy Rakhi, ${name.trim()} ❤️"
 }
 
 @Composable
@@ -89,7 +94,7 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
             }
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text("राखी का दिन", style = MaterialTheme.typography.labelLarge, color = RakhiMuted)
-                Text("खुश रहो, ${data.name} ❤️", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(greetingFor(data.name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -99,48 +104,19 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         ) {
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 26.dp)) {
-                Text("कुछ रिश्ते", style = MaterialTheme.typography.labelLarge, color = RakhiMaroon)
-                Text(
-                    "वक़्त के साथ पुराने नहीं होते…",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-                Text(
-                    "बस उनकी यादें और भी खूबसूरत हो जाती हैं।",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                Text(
-                    "बचपन की लड़ाइयाँ, छोटी-छोटी शरारतें… और आज भी वही अपनापन। ❤️",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-                    lineHeight = 22.sp,
-                    modifier = Modifier.padding(top = 18.dp),
-                )
+                Text("कुछ रिश्ते", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text("वक़्त के साथ पुराने नहीं होते…", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 6.dp))
+                Text("बस उनकी यादें और भी खूबसूरत हो जाती हैं।", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 4.dp))
+                Text("बचपन की लड़ाइयाँ, छोटी-छोटी शरारतें… और आज भी वही अपनापन। ❤️", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f), lineHeight = 22.sp, modifier = Modifier.padding(top = 18.dp))
             }
         }
 
         GiftCard(data.gift, data.claim, viewModel)
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Row(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = CircleShape, color = RakhiBlush) {
-                    Icon(
-                        imageVector = Icons.Outlined.Lock,
-                        contentDescription = null,
-                        tint = RakhiMaroon,
-                        modifier = Modifier.padding(9.dp),
-                    )
+                    Icon(Icons.Outlined.Lock, contentDescription = null, tint = RakhiMaroon, modifier = Modifier.padding(9.dp))
                 }
                 Column(modifier = Modifier.padding(start = 12.dp)) {
                     Text("आपकी जगह सुरक्षित है", fontWeight = FontWeight.SemiBold)
@@ -149,25 +125,13 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
             }
         }
 
-        Text(
-            "राखी बाँधने को हाथ दूर हों तो क्या…\nदिलों की डोर तो पास ही रहती है। ❤️",
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = RakhiMuted,
-            textAlign = TextAlign.Center,
-            lineHeight = 22.sp,
-        )
+        Text("राखी बाँधने को हाथ दूर हों तो क्या…\nदिलों की डोर तो पास ही रहती है। ❤️", modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, textAlign = TextAlign.Center, lineHeight = 22.sp)
     }
 }
 
 @Composable
 private fun GiftCard(gift: com.rajnish.rakshabandhan.features.home.data.GiftData?, claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData?, viewModel: HomeViewModel) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)) {
         Column(modifier = Modifier.padding(22.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -199,7 +163,7 @@ private fun GiftCard(gift: com.rajnish.rakshabandhan.features.home.data.GiftData
 
 @Composable
 private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.data.GiftData, viewModel: HomeViewModel) {
-    var upiId by rememberSaveable { mutableStateOf("") }
+    var upiId by remember { mutableStateOf("") }
     val state by viewModel.uiState.collectAsState()
     val successData = (state as? HomeUiState.Success)?.data
     val error = successData?.claimError
@@ -211,27 +175,10 @@ private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.dat
     Spacer(modifier = Modifier.height(18.dp))
     Text("तोहफ़ा कहाँ भेजूँ?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     Text("अपनी UPI ID डाल दो, बाकी हम संभाल लेंगे।", style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, modifier = Modifier.padding(top = 5.dp, bottom = 14.dp))
-    OutlinedTextField(
-        value = upiId,
-        onValueChange = { upiId = it; viewModel.clearClaimError() },
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text("UPI ID") },
-        placeholder = { Text("yourname@upi") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-        enabled = !submitting,
-        isError = error != null,
-        supportingText = { Text("जैसे: name@okaxis या mobile@upi") },
-    )
+    OutlinedTextField(value = upiId, onValueChange = { upiId = it; viewModel.clearClaimError() }, modifier = Modifier.fillMaxWidth(), label = { Text("UPI ID") }, placeholder = { Text("yourname@upi") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii), enabled = !submitting, isError = error != null, supportingText = { Text("जैसे: name@okaxis या mobile@upi") })
     error?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(modifier = Modifier.height(10.dp))
-    Button(
-        onClick = { viewModel.submitClaim(upiId) },
-        enabled = !submitting && upiId.isNotBlank(),
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = RakhiMaroon),
-    ) {
+    Button(onClick = { viewModel.submitClaim(upiId) }, enabled = !submitting && upiId.isNotBlank(), modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = RakhiMaroon)) {
         if (submitting) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
         Text(if (submitting) "बस भेज रहे हैं…" else "मेरा तोहफ़ा भेज दो", fontWeight = FontWeight.SemiBold)
     }
