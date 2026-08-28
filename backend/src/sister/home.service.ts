@@ -28,7 +28,7 @@ export class SisterHomeService {
     return {
       sisterId: profile.sisterId,
       email: profile.email,
-      name: user.displayName?.trim() || "Sister",
+      name: profile.name,
       enrollmentStatus: "ACTIVE",
     };
   }
