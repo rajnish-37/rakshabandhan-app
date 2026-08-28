@@ -29,6 +29,7 @@ data class HomeData(
     val enrollmentStatus: String,
     val gift: GiftData?,
     val claim: GiftClaimData?,
+    val claimError: String? = null,
 )
 
 class HomeViewModel(
@@ -75,6 +76,11 @@ class HomeViewModel(
     fun submitClaim(upiId: String) {
         val current = _uiState.value
         if (current !is HomeUiState.Success || current.data.claim != null) return
+        val normalizedUpiId = upiId.trim()
+        if (normalizedUpiId.isBlank()) {
+            _uiState.value = current.copy(data = current.data.copy(claimError = "Enter your UPI ID."))
+            return
+        }
         val user = firebaseAuth.currentUser ?: run {
             _uiState.value = HomeUiState.Unauthorized
             return
@@ -83,32 +89,30 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 val token = Tasks.await(user.getIdToken(false))?.token ?: error("Authentication token unavailable")
-                when (val result = claimApi.submitClaim(token, upiId)) {
+                when (val result = claimApi.submitClaim(token, normalizedUpiId)) {
                     is com.rajnish.rakshabandhan.features.home.data.ClaimResult.Success -> result.claim ?: error("Invalid claim response")
                     is com.rajnish.rakshabandhan.features.home.data.ClaimResult.Failure -> error(result.message)
                 }
             }.onSuccess { claim ->
                 val state = _uiState.value
                 if (state is HomeUiState.Success) {
-                    _uiState.value = state.copy(data = state.data.copy(claim = claim))
+                    _uiState.value = state.copy(data = state.data.copy(claim = claim, claimError = null))
                 }
             }.onFailure { error ->
-                val message = error.message ?: "Unable to submit your claim."
                 val state = _uiState.value
                 if (state is HomeUiState.Success) {
-                    _uiState.value = state.copy(data = state.data.copy(claim = null))
-                    claimError = message
+                    _uiState.value = state.copy(data = state.data.copy(claimError = error.message ?: "Unable to submit your claim."))
                 } else {
-                    _uiState.value = HomeUiState.Error(message)
+                    _uiState.value = HomeUiState.Error(error.message ?: "Unable to submit your claim.")
                 }
             }
         }
     }
 
-    private var claimError: String? = null
-    fun consumeClaimError(): String? {
-        val error = claimError
-        claimError = null
-        return error
+    fun clearClaimError() {
+        val state = _uiState.value
+        if (state is HomeUiState.Success && state.data.claimError != null) {
+            _uiState.value = state.copy(data = state.data.copy(claimError = null))
+        }
     }
 }
