@@ -29,15 +29,15 @@ export class SisterAccountService {
   async provision(sisterId: string, email: string): Promise<ProvisionSisterAccountResult> {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedSisterId = sisterId.trim();
-    const sisterName = SISTER_NAMES[normalizedSisterId];
 
     if (!normalizedSisterId) throw new Error("Sister ID is required");
-    if (!sisterName) throw new Error("Unknown sister ID");
     if (!normalizedEmail || !normalizedEmail.includes("@")) {
       throw new Error("A valid email is required");
     }
 
     const existingProfile = await this.repository.findById(normalizedSisterId);
+    const sisterName =
+      SISTER_NAMES[normalizedSisterId] ?? existingProfile?.name ?? "Sister";
     let user;
 
     if (existingProfile) {
