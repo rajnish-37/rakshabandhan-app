@@ -30,16 +30,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private data class SisterOption(val id: String, val name: String)
-private val sisters = listOf(
-    SisterOption("Sister_01", "Nisha"), SisterOption("Sister_02", "Neha"),
-    SisterOption("Sister_03", "Mona"), SisterOption("Sister_04", "Khushi"),
-)
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { AdminScreen() }
+    }
+
+    private fun loadSisters(onComplete: (SisterListResult) -> Unit) {
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { SisterApi.getSisters() }
+            onComplete(result)
+        }
     }
 
     private fun sendInvitation(sisterId: String, email: String, onComplete: (InvitationResult) -> Unit) {
@@ -58,14 +59,29 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun AdminScreen() {
-        var selected by remember { mutableStateOf(sisters.first()) }
+        var sisters by remember { mutableStateOf<List<SisterOption>>(emptyList()) }
+        var selected by remember { mutableStateOf<SisterOption?>(null) }
         var expanded by remember { mutableStateOf(false) }
         var email by remember { mutableStateOf("") }
         var amount by remember { mutableStateOf("") }
         var eligible by remember { mutableStateOf(false) }
         var message by remember { mutableStateOf<String?>(null) }
+        var loadingSisters by remember { mutableStateOf(true) }
         var savingGift by remember { mutableStateOf(false) }
         var sendingInvitation by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            loadSisters { result ->
+                loadingSisters = false
+                if (result.success) {
+                    sisters = result.sisters
+                    selected = result.sisters.firstOrNull()
+                    email = result.sisters.firstOrNull()?.email.orEmpty()
+                } else {
+                    message = result.message
+                }
+            }
+        }
 
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -73,115 +89,122 @@ class MainActivity : ComponentActivity() {
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 Text("Raksha Bandhan Admin", style = MaterialTheme.typography.headlineMedium)
-                Text("Manage a sister's invitation and gift.", style = MaterialTheme.typography.bodyLarge)
+                Text("Manage sisters, invitations and gifts.", style = MaterialTheme.typography.bodyLarge)
 
-                Column {
-                    Text("Sister", style = MaterialTheme.typography.labelLarge)
-                    OutlinedButton(
-                        onClick = { expanded = true },
-                        enabled = !savingGift && !sendingInvitation,
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    ) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(selected.name)
-                            Text(selected.id)
-                        }
+                if (loadingSisters) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp))
+                        Text("Loading sisters...")
                     }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        sisters.forEach { sister ->
-                            DropdownMenuItem(
-                                text = { Text("${sister.name} (${sister.id})") },
-                                onClick = {
-                                    selected = sister
-                                    expanded = false
-                                    message = null
-                                },
-                            )
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it; message = null },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Sister email") },
-                    singleLine = true,
-                    enabled = !savingGift && !sendingInvitation,
-                )
-                Button(
-                    onClick = {
-                        val value = email.trim()
-                        if (!value.contains("@")) {
-                            message = "Enter a valid email address."
-                            return@Button
-                        }
-                        sendingInvitation = true
-                        message = null
-                        sendInvitation(selected.id, value) { result ->
-                            sendingInvitation = false
-                            message = result.message
-                            if (result.success) email = ""
-                        }
-                    },
-                    enabled = !sendingInvitation && !savingGift,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (sendingInvitation) {
-                        CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
-                        Text("Sending...")
-                    } else Text("Send Invitation")
-                }
-
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Gift configuration", style = MaterialTheme.typography.titleMedium)
-                        OutlinedTextField(
-                            value = amount,
-                            onValueChange = { amount = it; message = null },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Gift amount (INR)") },
-                            singleLine = true,
+                } else if (selected == null) {
+                    Text(message ?: "No sisters are configured.")
+                } else {
+                    val current = selected!!
+                    Column {
+                        Text("Sister", style = MaterialTheme.typography.labelLarge)
+                        OutlinedButton(
+                            onClick = { expanded = true },
                             enabled = !savingGift && !sendingInvitation,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                         ) {
-                            Column {
-                                Text("Claim eligible", fontWeight = FontWeight.SemiBold)
-                                Text(
-                                    if (eligible) "Sister can claim this gift" else "Keep gift pending",
-                                    style = MaterialTheme.typography.bodySmall,
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(current.name)
+                                Text(current.id)
+                            }
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            sisters.forEach { sister ->
+                                DropdownMenuItem(
+                                    text = { Text("${sister.name} (${sister.id})") },
+                                    onClick = {
+                                        selected = sister
+                                        expanded = false
+                                        email = sister.email
+                                        message = null
+                                    },
                                 )
                             }
-                            Switch(
-                                checked = eligible,
-                                onCheckedChange = { eligible = it; message = null },
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it; message = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Sister email") },
+                        singleLine = true,
+                        enabled = !savingGift && !sendingInvitation,
+                    )
+                    Button(
+                        onClick = {
+                            val value = email.trim()
+                            if (!value.contains("@")) {
+                                message = "Enter a valid email address."
+                                return@Button
+                            }
+                            sendingInvitation = true
+                            message = null
+                            sendInvitation(current.id, value) { result ->
+                                sendingInvitation = false
+                                message = result.message
+                            }
+                        },
+                        enabled = !sendingInvitation && !savingGift,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (sendingInvitation) {
+                            CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
+                            Text("Sending...")
+                        } else Text("Send Invitation")
+                    }
+
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Gift configuration", style = MaterialTheme.typography.titleMedium)
+                            OutlinedTextField(
+                                value = amount,
+                                onValueChange = { amount = it; message = null },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Gift amount (INR)") },
+                                singleLine = true,
                                 enabled = !savingGift && !sendingInvitation,
                             )
-                        }
-                        Button(
-                            onClick = {
-                                if (amount.toDoubleOrNull()?.let { it > 0 } != true) {
-                                    message = "Enter a valid gift amount."
-                                    return@Button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column {
+                                    Text("Claim eligible", fontWeight = FontWeight.SemiBold)
+                                    Text(if (eligible) "Sister can claim this gift" else "Keep gift pending", style = MaterialTheme.typography.bodySmall)
                                 }
-                                savingGift = true
-                                message = null
-                                configureGift(selected.id, amount.trim(), eligible) { result ->
-                                    savingGift = false
-                                    message = result.message
-                                }
-                            },
-                            enabled = !savingGift && !sendingInvitation,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            if (savingGift) {
-                                CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
-                                Text("Saving...")
-                            } else Text("Save Gift")
+                                Switch(
+                                    checked = eligible,
+                                    onCheckedChange = { eligible = it; message = null },
+                                    enabled = !savingGift && !sendingInvitation,
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    if (amount.toDoubleOrNull()?.let { it > 0 } != true) {
+                                        message = "Enter a valid gift amount."
+                                        return@Button
+                                    }
+                                    savingGift = true
+                                    message = null
+                                    configureGift(current.id, amount.trim(), eligible) { result ->
+                                        savingGift = false
+                                        message = result.message
+                                    }
+                                },
+                                enabled = !savingGift && !sendingInvitation,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                if (savingGift) {
+                                    CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
+                                    Text("Saving...")
+                                } else Text("Save Gift")
+                            }
                         }
                     }
                 }
