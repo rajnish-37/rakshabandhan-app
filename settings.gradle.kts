@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "RakshaBandhan"
 include(":app")
+include(":admin")
