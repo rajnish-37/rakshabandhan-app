@@ -29,12 +29,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private data class SisterOption(val id: String, val name: String)
-
 private val sisters = listOf(
-    SisterOption("Sister_01", "Nisha"),
-    SisterOption("Sister_02", "Neha"),
-    SisterOption("Sister_03", "Mona"),
-    SisterOption("Sister_04", "Khushi"),
+    SisterOption("Sister_01", "Nisha"), SisterOption("Sister_02", "Neha"),
+    SisterOption("Sister_03", "Mona"), SisterOption("Sister_04", "Khushi"),
 )
 
 class MainActivity : ComponentActivity() {
@@ -43,15 +40,16 @@ class MainActivity : ComponentActivity() {
         setContent { AdminScreen() }
     }
 
-    private fun sendInvitation(
-        sisterId: String,
-        email: String,
-        onComplete: (InvitationResult) -> Unit,
-    ) {
+    private fun sendInvitation(sisterId: String, email: String, onComplete: (InvitationResult) -> Unit) {
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                InvitationApi.createInvitation(sisterId, email)
-            }
+            val result = withContext(Dispatchers.IO) { InvitationApi.createInvitation(sisterId, email) }
+            onComplete(result)
+        }
+    }
+
+    private fun configureGift(sisterId: String, amount: String, eligible: Boolean, onComplete: (GiftResult) -> Unit) {
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { GiftApi.configureGift(sisterId, amount, eligible) }
             onComplete(result)
         }
     }
@@ -61,88 +59,65 @@ class MainActivity : ComponentActivity() {
         var selected by remember { mutableStateOf(sisters.first()) }
         var expanded by remember { mutableStateOf(false) }
         var email by remember { mutableStateOf("") }
+        var amount by remember { mutableStateOf("") }
+        var eligible by remember { mutableStateOf(false) }
         var message by remember { mutableStateOf<String?>(null) }
-        var sending by remember { mutableStateOf(false) }
+        var savingGift by remember { mutableStateOf(false) }
+        var sendingInvitation by remember { mutableStateOf(false) }
 
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
+        Surface(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Text("Raksha Bandhan Admin", style = MaterialTheme.typography.headlineMedium)
-                Text("Create an invitation for a sister.", style = MaterialTheme.typography.bodyLarge)
+                Text("Manage a sister's invitation and gift.", style = MaterialTheme.typography.bodyLarge)
 
                 Column {
                     Text("Sister", style = MaterialTheme.typography.labelLarge)
-                    OutlinedButton(
-                        onClick = { expanded = true },
-                        enabled = !sending,
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(selected.name)
-                            Text(selected.id)
+                    OutlinedButton(onClick = { expanded = true }, enabled = !savingGift && !sendingInvitation, Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(selected.name); Text(selected.id)
                         }
                     }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         sisters.forEach { sister ->
-                            DropdownMenuItem(
-                                text = { Text("${sister.name} (${sister.id})") },
-                                onClick = {
-                                    selected = sister
-                                    expanded = false
-                                    message = null
-                                },
-                            )
+                            DropdownMenuItem(text = { Text("${sister.name} (${sister.id})") }, onClick = {
+                                selected = sister; expanded = false; message = null
+                            })
                         }
                     }
                 }
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it; message = null },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Sister email") },
-                    singleLine = true,
-                    enabled = !sending,
-                )
+                OutlinedTextField(email, { email = it; message = null }, Modifier.fillMaxWidth(), label = { Text("Sister email") }, singleLine = true, enabled = !savingGift && !sendingInvitation)
+                Button(onClick = {
+                    val value = email.trim()
+                    if (!value.contains("@")) { message = "Enter a valid email address."; return@Button }
+                    sendingInvitation = true; message = null
+                    sendInvitation(selected.id, value) { result ->
+                        sendingInvitation = false; message = result.message
+                        if (result.success) email = ""
+                    }
+                }, enabled = !sendingInvitation && !savingGift, Modifier.fillMaxWidth()) {
+                    if (sendingInvitation) { CircularProgressIndicator(Modifier.padding(end = 10.dp)); Text("Sending...") } else Text("Send Invitation")
+                }
 
-                Button(
-                    onClick = {
-                        val normalizedEmail = email.trim()
-                        if (!normalizedEmail.contains("@")) {
-                            message = "Enter a valid email address."
-                            return@Button
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Gift configuration", style = MaterialTheme.typography.titleMedium)
+                        OutlinedTextField(amount, { amount = it; message = null }, Modifier.fillMaxWidth(), label = { Text("Gift amount (INR)") }, singleLine = true, enabled = !savingGift && !sendingInvitation)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column { Text("Claim eligible", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold); Text(if (eligible) "Sister can claim this gift" else "Keep gift pending", style = MaterialTheme.typography.bodySmall) }
+                            androidx.compose.material3.Switch(checked = eligible, onCheckedChange = { eligible = it; message = null }, enabled = !savingGift && !sendingInvitation)
                         }
-
-                        sending = true
-                        message = null
-                        sendInvitation(selected.id, normalizedEmail) { result ->
-                            sending = false
-                            message = result.message
-                            if (result.success) email = ""
+                        Button(onClick = {
+                            if (amount.toDoubleOrNull()?.let { it > 0 } != true) { message = "Enter a valid gift amount."; return@Button }
+                            savingGift = true; message = null
+                            configureGift(selected.id, amount.trim(), eligible) { result -> savingGift = false; message = result.message }
+                        }, enabled = !savingGift && !sendingInvitation, Modifier.fillMaxWidth()) {
+                            if (savingGift) { CircularProgressIndicator(Modifier.padding(end = 10.dp)); Text("Saving...") } else Text("Save Gift")
                         }
-                    },
-                    enabled = !sending,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (sending) {
-                        CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
-                        Text("Sending...")
-                    } else {
-                        Text("Send Invitation")
                     }
                 }
 
                 message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Selected sister", style = MaterialTheme.typography.labelLarge)
-                        Text(selected.name, style = MaterialTheme.typography.titleMedium)
-                        Text(selected.id, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
             }
         }
     }
