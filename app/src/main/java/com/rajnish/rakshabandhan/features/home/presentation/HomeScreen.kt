@@ -51,10 +51,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
 @Composable
 private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "❤️", modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp))
             Column(modifier = Modifier.padding(start = 12.dp)) {
@@ -75,11 +72,7 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
 }
 
 @Composable
-private fun GiftCard(
-    gift: com.rajnish.rakshabandhan.features.home.data.GiftData?,
-    claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData?,
-    viewModel: HomeViewModel,
-) {
+private fun GiftCard(gift: com.rajnish.rakshabandhan.features.home.data.GiftData?, claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData?, viewModel: HomeViewModel) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(text = "🎁  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -107,20 +100,39 @@ private fun GiftCard(
 @Composable
 private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.data.GiftData, viewModel: HomeViewModel) {
     var upiId by rememberSaveable { mutableStateOf("") }
-    var submitting by remember { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsState()
-    val error = (state as? HomeUiState.Success)?.data?.claimError
+    val successData = (state as? HomeUiState.Success)?.data
+    val error = successData?.claimError
+    val submitting = successData?.claimSubmitting == true
     val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
+
     Text(text = "${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
     Text(text = "Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
     Spacer(modifier = Modifier.height(18.dp))
     Text(text = "Claim your gift", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     Text(text = "Enter the UPI ID where you want to receive the gift.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp, bottom = 14.dp))
-    OutlinedTextField(value = upiId, onValueChange = { upiId = it; viewModel.clearClaimError() }, modifier = Modifier.fillMaxWidth(), label = { Text("UPI ID") }, placeholder = { Text("yourname@upi") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii), enabled = !submitting, isError = error != null, supportingText = { Text("Example: name@okaxis or mobile@upi") })
+    OutlinedTextField(
+        value = upiId,
+        onValueChange = { upiId = it; viewModel.clearClaimError() },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("UPI ID") },
+        placeholder = { Text("yourname@upi") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+        enabled = !submitting,
+        isError = error != null,
+        supportingText = { Text("Example: name@okaxis or mobile@upi") },
+    )
     error?.let { Text(text = it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(modifier = Modifier.height(10.dp))
-    Button(onClick = { submitting = true; viewModel.submitClaim(upiId); submitting = false }, enabled = !submitting && upiId.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
-        if (submitting) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
+    Button(
+        onClick = { viewModel.submitClaim(upiId) },
+        enabled = !submitting && upiId.isNotBlank(),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (submitting) {
+            CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
+        }
         Text(if (submitting) "Submitting..." else "Claim Gift")
     }
     Text(text = "Payment will be made manually by the admin.", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
