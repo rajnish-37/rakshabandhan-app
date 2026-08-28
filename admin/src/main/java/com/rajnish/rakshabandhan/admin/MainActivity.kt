@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -44,6 +46,7 @@ private fun AdminScreen() {
     var expanded by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
+    var sending by remember { mutableStateOf(false) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -57,6 +60,7 @@ private fun AdminScreen() {
                 Text("Sister", style = MaterialTheme.typography.labelLarge)
                 OutlinedButton(
                     onClick = { expanded = true },
+                    enabled = !sending,
                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -71,6 +75,7 @@ private fun AdminScreen() {
                             onClick = {
                                 selected = sister
                                 expanded = false
+                                message = null
                             },
                         )
                     }
@@ -79,19 +84,41 @@ private fun AdminScreen() {
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { email = it; message = null },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Sister email") },
                 singleLine = true,
+                enabled = !sending,
             )
 
             Button(
                 onClick = {
-                    message = if (email.trim().isEmpty()) "Enter an email address." else "Ready to send invitation for ${selected.name}."
+                    val normalizedEmail = email.trim()
+                    if (!normalizedEmail.contains("@")) {
+                        message = "Enter a valid email address."
+                        return@Button
+                    }
+
+                    sending = true
+                    message = null
+                    Thread {
+                        val result = InvitationApi.createInvitation(selected.id, normalizedEmail)
+                        runOnUiThread {
+                            sending = false
+                            message = result.message
+                            if (result.success) email = ""
+                        }
+                    }.start()
                 },
+                enabled = !sending,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Send Invitation")
+                if (sending) {
+                    CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
+                    Text("Sending...")
+                } else {
+                    Text("Send Invitation")
+                }
             }
 
             message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
