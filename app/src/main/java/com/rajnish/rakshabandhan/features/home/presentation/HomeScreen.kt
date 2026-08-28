@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
@@ -43,47 +45,53 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
 @Composable
 private fun SuccessHome(data: HomeData) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp),
-        verticalArrangement = Arrangement.Top,
-    ) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("❤️", modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp))
-            Column(modifier = Modifier.padding(start = 12.dp)) {
+            Column(Modifier.padding(start = 12.dp)) {
                 Text("Rakhi Bandhan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("Your special day", style = MaterialTheme.typography.bodyMedium)
             }
         }
         Spacer(Modifier.height(32.dp))
         Text("Hello, ${data.name} ❤️", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Wishing you a very Happy Raksha Bandhan!", modifier = Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyLarge)
+        Text("Wishing you a very Happy Raksha Bandhan!", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(28.dp))
-        GiftCard()
+        GiftCard(data.gift)
         Spacer(Modifier.height(18.dp))
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(Modifier.fillMaxWidth().padding(18.dp)) {
                 Text("Your account is protected", fontWeight = FontWeight.SemiBold)
-                Text("Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 3.dp))
+                Text("Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, Modifier.padding(top = 3.dp))
             }
         }
     }
 }
 
 @Composable
-private fun GiftCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+private fun GiftCard(gift: com.rajnish.rakshabandhan.features.home.data.GiftData?) {
+    Card(Modifier.fillMaxWidth(), RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Column(Modifier.padding(24.dp)) {
             Text("🎁  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(18.dp))
-            Text("Gift details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp))
-            Spacer(Modifier.height(20.dp))
-            Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("Claim Gift") }
-            Text("Gift status: Not configured", style = MaterialTheme.typography.labelMedium, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
+            if (gift == null) {
+                Text("Gift details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, Modifier.padding(top = 5.dp))
+                Spacer(Modifier.height(20.dp))
+                Button(onClick = {}, enabled = false, Modifier.fillMaxWidth()) { Text("Claim Gift") }
+                Text("Gift status: Not configured", style = MaterialTheme.typography.labelMedium, Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
+            } else {
+                val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
+                Text("${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                Text("Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, Modifier.padding(top = 6.dp))
+                Spacer(Modifier.height(18.dp))
+                Button(onClick = {}, enabled = gift.claimEligible, Modifier.fillMaxWidth()) { Text("Claim Gift") }
+                Text(
+                    if (gift.claimEligible) "Your gift is ready to claim." else "This gift is not currently eligible for claiming.",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp),
+                )
+            }
         }
     }
 }
@@ -92,7 +100,7 @@ private fun GiftCard() {
 private fun LoadingHome() {
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         CircularProgressIndicator()
-        Text("Loading your Rakhi home...", modifier = Modifier.padding(top = 12.dp))
+        Text("Loading your Rakhi home...", Modifier.padding(top = 12.dp))
     }
 }
 
@@ -100,7 +108,7 @@ private fun LoadingHome() {
 private fun ActionHome(title: String, message: String, action: String, onAction: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(message, modifier = Modifier.padding(top = 8.dp))
-        Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp)) { Text(action) }
+        Text(message, Modifier.padding(top = 8.dp))
+        Button(onClick = onAction, Modifier.padding(top = 16.dp)) { Text(action) }
     }
 }
