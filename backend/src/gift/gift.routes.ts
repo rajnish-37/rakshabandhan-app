@@ -46,7 +46,10 @@ export async function giftRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  app.get<{ Params: { sisterId: string } }>("/sisters/:sisterId/gift", async (request, reply) => {
+  app.get<{ Params: { sisterId: string } }>("/admin/sisters/:sisterId/gift", async (request, reply) => {
+    const authorizationError = requireAdminAuthorization(request);
+    if (authorizationError) return reply.code(401).send(authorizationError);
+
     try {
       const sisterId = requireString(request.params.sisterId, "Sister ID", 64);
       const gift = await service.getBySisterId(sisterId);
