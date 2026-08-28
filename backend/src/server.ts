@@ -4,6 +4,7 @@ import { checkFirestoreConnection } from "./firebase/health.js";
 import { invitationRoutes } from "./invitation/invitation.routes.js";
 import { deviceRoutes } from "./device/device.routes.js";
 import { sisterRoutes } from "./sister/sister.routes.js";
+import { giftRoutes } from "./gift/gift.routes.js";
 
 const app = Fastify({
   logger: true,
@@ -28,17 +29,14 @@ app.get("/health/firestore", async (_request, reply) => {
     return { status: "ok", service: "firestore" };
   } catch (error) {
     app.log.error(error, "Firestore health check failed");
-    return reply.code(503).send({
-      status: "error",
-      service: "firestore",
-      message: "Firestore connection failed",
-    });
+    return reply.code(503).send({ status: "error", service: "firestore", message: "Firestore connection failed" });
   }
 });
 
 await invitationRoutes(app);
 await deviceRoutes(app);
 await sisterRoutes(app);
+await giftRoutes(app);
 
 const start = async (): Promise<void> => {
   try {
