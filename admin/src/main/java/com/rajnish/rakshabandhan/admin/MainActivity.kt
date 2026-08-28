@@ -44,17 +44,17 @@ class MainActivity : ComponentActivity() {
         setContent { AdminScreen() }
     }
 
-    private fun loadSisters(onComplete: (SisterListResult) -> Unit) {
-        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { SisterApi.getSisters() }) }
+    private fun loadSisters(key: String, onComplete: (SisterListResult) -> Unit) {
+        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { SisterApi.getSisters(key) }) }
     }
-    private fun loadGift(sisterId: String, onComplete: (GiftResult) -> Unit) {
-        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { GiftApi.getGift(sisterId) }) }
+    private fun loadGift(sisterId: String, key: String, onComplete: (GiftResult) -> Unit) {
+        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { GiftApi.getGift(sisterId, key) }) }
     }
-    private fun sendInvitation(sisterId: String, email: String, onComplete: (InvitationResult) -> Unit) {
-        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { InvitationApi.createInvitation(sisterId, email) }) }
+    private fun sendInvitation(sisterId: String, email: String, key: String, onComplete: (InvitationResult) -> Unit) {
+        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { InvitationApi.createInvitation(sisterId, email, key) }) }
     }
-    private fun configureGift(sisterId: String, amount: String, eligible: Boolean, onComplete: (GiftResult) -> Unit) {
-        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { GiftApi.configureGift(sisterId, amount, eligible) }) }
+    private fun configureGift(sisterId: String, amount: String, eligible: Boolean, key: String, onComplete: (GiftResult) -> Unit) {
+        lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { GiftApi.configureGift(sisterId, amount, eligible, key) }) }
     }
     private fun loadPendingClaims(key: String, onComplete: (ClaimsResult) -> Unit) {
         lifecycleScope.launch { onComplete(withContext(Dispatchers.IO) { ClaimApi.getPendingClaims(key) }) }
@@ -85,7 +85,17 @@ class MainActivity : ComponentActivity() {
         var message by remember { mutableStateOf<String?>(null) }
         val context = LocalContext.current
 
+        fun requireAdminKey(): String? {
+            val key = adminApiKey.trim()
+            if (key.isBlank()) {
+                message = "Admin API key is required for this build."
+                return null
+            }
+            return key
+        }
+
         fun loadSelectedGift(sister: SisterOption) {
+            val key = requireAdminKey() ?: return
             selected = sister
             email = sister.email
             expanded = false
@@ -95,7 +105,7 @@ class MainActivity : ComponentActivity() {
             eligible = false
             message = null
             loadingGift = true
-            loadGift(sister.id) { result ->
+            loadGift(sister.id, key) { result ->
                 loadingGift = false
                 if (result.success) {
                     result.gift?.let {
@@ -109,12 +119,21 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        fun refreshClaims() {
-            val key = adminApiKey.trim()
-            if (key.isBlank()) {
-                message = "Admin API key is not configured for this debug build."
-                return
+        fun refreshSisters() {
+            val key = requireAdminKey() ?: return
+            loadingSisters = true
+            message = null
+            loadSisters(key) { result ->
+                loadingSisters = false
+                if (result.success) {
+                    sisters = result.sisters
+                    result.sisters.firstOrNull()?.let(::loadSelectedGift)
+                } else message = result.message
             }
+        }
+
+        fun refreshClaims() {
+            val key = requireAdminKey() ?: return
             loadingClaims = true
             message = null
             loadPendingClaims(key) { result ->
@@ -128,13 +147,7 @@ class MainActivity : ComponentActivity() {
         }
 
         LaunchedEffect(Unit) {
-            loadSisters { result ->
-                loadingSisters = false
-                if (result.success) {
-                    sisters = result.sisters
-                    result.sisters.firstOrNull()?.let(::loadSelectedGift)
-                } else message = result.message
-            }
+            refreshSisters()
         }
 
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -144,6 +157,17 @@ class MainActivity : ComponentActivity() {
             ) {
                 Text("Raksha Bandhan Admin", style = MaterialTheme.typography.headlineMedium)
                 Text("Manage sisters, invitations, gifts and manual payments.", style = MaterialTheme.typography.bodyLarge)
+
+                OutlinedTextField(
+                    value = adminApiKey,
+                    onValueChange = { adminApiKey = it; message = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Admin API key") },
+                    singleLine = true,
+                )
+                OutlinedButton(onClick = ::refreshSisters, enabled = !loadingSisters && !sendingInvitation && !savingGift, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (loadingSisters) "Loading sisters..." else "Load / Refresh Sisters")
+                }
 
                 if (loadingSisters) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -186,6 +210,7 @@ class MainActivity : ComponentActivity() {
                     )
                     Button(
                         onClick = {
+                            val key = requireAdminKey() ?: return@Button
                             val value = email.trim()
                             if (!value.contains("@")) {
                                 message = "Enter a valid email address."
@@ -193,7 +218,7 @@ class MainActivity : ComponentActivity() {
                             }
                             sendingInvitation = true
                             message = null
-                            sendInvitation(current.id, value) { result ->
+                            sendInvitation(current.id, value, key) { result ->
                                 sendingInvitation = false
                                 message = result.message
                             }
@@ -241,13 +266,14 @@ class MainActivity : ComponentActivity() {
                                 }
                                 Button(
                                     onClick = {
+                                        val key = requireAdminKey() ?: return@Button
                                         if (amount.toDoubleOrNull()?.let { it > 0 } != true) {
                                             message = "Enter a valid gift amount."
                                             return@Button
                                         }
                                         savingGift = true
                                         message = null
-                                        configureGift(current.id, amount.trim(), eligible) { result ->
+                                        configureGift(current.id, amount.trim(), eligible, key) { result ->
                                             savingGift = false
                                             message = result.message
                                             if (result.success) giftStatus = if (eligible) "ELIGIBLE" else "PENDING"
@@ -271,13 +297,6 @@ class MainActivity : ComponentActivity() {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Pending claims", style = MaterialTheme.typography.titleMedium)
                         Text("Payment is manual: copy the UPI ID, pay externally in PhonePe, then mark the claim paid.", style = MaterialTheme.typography.bodySmall)
-                        OutlinedTextField(
-                            value = adminApiKey,
-                            onValueChange = { adminApiKey = it; message = null },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Admin API key") },
-                            singleLine = true,
-                        )
                         Button(onClick = ::refreshClaims, enabled = !loadingClaims && !markingPaid, modifier = Modifier.fillMaxWidth()) {
                             if (loadingClaims) CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp))
                             Text(if (loadingClaims) "Loading..." else "Refresh Pending Claims")
@@ -318,11 +337,7 @@ class MainActivity : ComponentActivity() {
                                     Text("Only mark this claim paid after the external PhonePe payment succeeds.", style = MaterialTheme.typography.bodySmall)
                                     Button(
                                         onClick = {
-                                            val key = adminApiKey.trim()
-                                            if (key.isBlank()) {
-                                                message = "Admin API key is not configured for this debug build."
-                                                return@Button
-                                            }
+                                            val key = requireAdminKey() ?: return@Button
                                             markingPaid = true
                                             message = null
                                             markClaimPaid(key, claim.claimId) { result ->
