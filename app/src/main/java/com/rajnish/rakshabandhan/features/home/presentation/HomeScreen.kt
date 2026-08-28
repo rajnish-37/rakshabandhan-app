@@ -93,12 +93,35 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
             }
         }
 
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(30.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        ) {
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 26.dp)) {
                 Text("कुछ रिश्ते", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Text("वक़्त के साथ पुराने नहीं होते…", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 6.dp))
                 Text("बस उनकी यादें और भी खूबसूरत हो जाती हैं।", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 4.dp))
                 Text("बचपन की लड़ाइयाँ, छोटी-छोटी शरारतें… और आज भी वही अपनापन। ❤️", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f), lineHeight = 22.sp, modifier = Modifier.padding(top = 18.dp))
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 24.dp)) {
+                Text("बहना के नाम… ✨", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "चाँदी सोना एक तरफ़, ✨\nमेरी बहना एक तरफ़, ❤️\nएक तरफ़ है उसकी आँखें, 👀\nजादू-टोना एक तरफ़। 🪄",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 30.sp,
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                )
             }
         }
 
