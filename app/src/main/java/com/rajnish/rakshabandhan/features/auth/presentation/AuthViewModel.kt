@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rajnish.rakshabandhan.features.auth.domain.AuthRepository
 import com.rajnish.rakshabandhan.features.auth.domain.AuthState
+import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,11 @@ class AuthViewModel(
         checkAuthenticationSession()
     }
 
-    fun checkAuthenticationSession() {
+    fun onAppForegrounded() {
+        checkAuthenticationSession(refreshToken = true)
+    }
+
+    fun checkAuthenticationSession(refreshToken: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(authState = AuthState.Initializing)
 
@@ -28,18 +33,40 @@ class AuthViewModel(
                 val hasFirebaseSession = authRepository.hasFirebaseSession()
                 val hasDeviceKey = authRepository.hasDeviceKey()
 
-                _uiState.value = _uiState.value.copy(
-                    authState = if (hasFirebaseSession || hasDeviceKey) {
-                        AuthState.Unauthenticated
-                    } else {
-                        AuthState.EnrollmentRequired
+                when {
+                    hasFirebaseSession && hasDeviceKey -> {
+                        if (refreshToken) {
+                            authRepository.refreshFirebaseSession(forceRefresh = false)
+                        }
+                        _uiState.value = _uiState.value.copy(authState = AuthState.Authenticated)
                     }
-                )
+
+                    hasFirebaseSession -> {
+                        authRepository.clearFirebaseSession()
+                        _uiState.value = _uiState.value.copy(
+                            authState = AuthState.EnrollmentRequired,
+                            email = "",
+                            code = "",
+                        )
+                    }
+
+                    hasDeviceKey -> {
+                        _uiState.value = _uiState.value.copy(authState = AuthState.Unauthenticated)
+                    }
+
+                    else -> {
+                        _uiState.value = _uiState.value.copy(authState = AuthState.EnrollmentRequired)
+                    }
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Error(
-                        message = e.message ?: "Unable to check authentication session"
-                    )
+                    authState = if (isOffline(e)) {
+                        AuthState.Offline
+                    } else {
+                        AuthState.Error(
+                            message = e.message ?: "Unable to check authentication session"
+                        )
+                    }
                 )
             }
         }
@@ -73,20 +100,27 @@ class AuthViewModel(
 
             authRepository.verifyInvitation(email, code)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(authState = AuthState.Unauthenticated)
+                    // Invitation verification only enrolls the trusted public key.
+                    // The Firebase session is created only after biometric proof of
+                    // possession of the corresponding private key.
+                    _uiState.value = _uiState.value.copy(
+                        authState = AuthState.Unauthenticated,
+                        email = "",
+                        code = "",
+                    )
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
-                        authState = AuthState.Error(
-                            message = error.message ?: "Unable to verify invitation"
-                        )
+                        authState = if (isOffline(error)) {
+                            AuthState.Offline
+                        } else {
+                            AuthState.Error(
+                                message = error.message ?: "Unable to verify invitation"
+                            )
+                        }
                     )
                 }
         }
-    }
-
-    fun setAuthenticating() {
-        _uiState.value = _uiState.value.copy(authState = AuthState.Authenticating)
     }
 
     fun prepareDeviceLogin(onChallengeReady: (challengeId: String, challenge: String) -> Unit) {
@@ -99,9 +133,13 @@ class AuthViewModel(
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
-                        authState = AuthState.Error(
-                            message = error.message ?: "Unable to start biometric sign in"
-                        )
+                        authState = if (isOffline(error)) {
+                            AuthState.Offline
+                        } else {
+                            AuthState.Error(
+                                message = error.message ?: "Unable to start biometric sign in"
+                            )
+                        }
                     )
                 }
         }
@@ -115,34 +153,15 @@ class AuthViewModel(
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
-                        authState = AuthState.Error(
-                            message = error.message ?: "Unable to complete biometric sign in"
-                        )
+                        authState = if (isOffline(error)) {
+                            AuthState.Offline
+                        } else {
+                            AuthState.Error(
+                                message = error.message ?: "Unable to complete biometric sign in"
+                            )
+                        }
                     )
                 }
-        }
-    }
-
-    fun onAuthenticationSuccess() {
-        viewModelScope.launch {
-            try {
-                if (!authRepository.hasFirebaseSession()) {
-                    _uiState.value = _uiState.value.copy(
-                        authState = AuthState.Error(
-                            message = "Firebase session is unavailable. Complete device sign in first."
-                        )
-                    )
-                    return@launch
-                }
-
-                _uiState.value = _uiState.value.copy(authState = AuthState.Authenticated)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Error(
-                        message = e.message ?: "Unable to complete biometric authentication"
-                    )
-                )
-            }
         }
     }
 
@@ -154,26 +173,14 @@ class AuthViewModel(
         checkAuthenticationSession()
     }
 
-    fun clearSession() {
-        viewModelScope.launch {
-            try {
-                authRepository.clearAuthenticatedSession()
-                _uiState.value = _uiState.value.copy(
-                    authState = if (authRepository.hasDeviceKey()) {
-                        AuthState.Unauthenticated
-                    } else {
-                        AuthState.EnrollmentRequired
-                    },
-                    email = "",
-                    code = "",
+    private fun isOffline(error: Throwable): Boolean =
+        generateSequence(error) { it.cause }.any { cause ->
+            cause is IOException ||
+                cause::class.simpleName in setOf(
+                    "UnknownHostException",
+                    "ConnectException",
+                    "SocketTimeoutException",
+                    "NoRouteToHostException",
                 )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    authState = AuthState.Error(
-                        message = e.message ?: "Unable to clear authentication session"
-                    )
-                )
-            }
         }
-    }
 }

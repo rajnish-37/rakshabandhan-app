@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Firestore is a server-only data store in the current architecture.
+    // The Android client talks to the trusted backend, which uses the
+    // Firebase Admin SDK and therefore bypasses client security rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

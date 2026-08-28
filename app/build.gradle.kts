@@ -5,6 +5,11 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+val configuredBackendBaseUrl = project.findProperty("RAKSHA_BACKEND_BASE_URL")
+    ?.toString()
+    ?.trim()
+    ?.trimEnd('/')
+
 android {
     namespace = "com.rajnish.rakshabandhan"
     compileSdk {
@@ -26,13 +31,18 @@ android {
             buildConfigField(
                 "String",
                 "BACKEND_BASE_URL",
-                "\"${project.findProperty("RAKSHA_BACKEND_BASE_URL") ?: "http://10.0.2.2:8080"}\""
+                "\"${configuredBackendBaseUrl ?: "http://10.0.2.2:8080"}\""
             )
         }
         release {
             optimization {
                 enable = false
             }
+            buildConfigField(
+                "String",
+                "BACKEND_BASE_URL",
+                "\"${configuredBackendBaseUrl ?: error("RAKSHA_BACKEND_BASE_URL must be configured for release builds")}\""
+            )
         }
     }
     compileOptions {
