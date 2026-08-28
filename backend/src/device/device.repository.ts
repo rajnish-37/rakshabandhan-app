@@ -26,49 +26,45 @@ export class DeviceRepository {
   private readonly collection = firestore.collection(COLLECTION);
 
   async register(record: DeviceKeyRecord): Promise<void> {
-    const existing = await this.findBySisterId(record.sisterId);
+    const snapshot = await this.collection
+      .where("sisterId", "==", record.sisterId)
+      .limit(1)
+      .get();
+
+    const existingDocument = snapshot.docs.at(0);
+    const existing = existingDocument ? fromDocument(existingDocument.data()) : null;
 
     if (existing && existing.authUid !== record.authUid) {
       throw new Error("Sister already has a device registered to a different identity");
     }
 
-    const target = existing
-      ? this.collection.doc(existing.keyId)
-      : this.collection.doc(record.keyId);
+    const stableDocument = this.collection.doc(record.sisterId);
 
     await firestore.runTransaction(async (transaction) => {
-      const current = await transaction.get(target);
+      const stableCurrent = await transaction.get(stableDocument);
 
-      if (existing) {
-        if (!current.exists) {
-          throw new Error("Existing device registration could not be found");
+      if (existingDocument && existingDocument.ref.path !== stableDocument.path) {
+        transaction.delete(existingDocument.ref);
+      }
+
+      if (stableCurrent.exists) {
+        const stableData = stableCurrent.data();
+        if (stableData?.authUid !== record.authUid || stableData?.sisterId !== record.sisterId) {
+          throw new Error("Sister already has a device registered to a different identity");
         }
 
-        transaction.update(target, {
+        transaction.update(stableDocument, {
           keyId: record.keyId,
-          sisterId: record.sisterId,
-          authUid: record.authUid,
           publicKey: record.publicKey,
           updatedAt: record.updatedAt,
         });
         return;
       }
 
-      if (current.exists) {
-        const data = current.data();
-        if (
-          data?.authUid !== record.authUid ||
-          data?.sisterId !== record.sisterId ||
-          data?.publicKey !== record.publicKey
-        ) {
-          throw new Error("Device key ID is already registered to a different identity");
-        }
-
-        transaction.update(target, { updatedAt: record.updatedAt });
-        return;
-      }
-
-      transaction.create(target, record);
+      transaction.create(stableDocument, {
+        ...record,
+        createdAt: existing?.createdAt ?? record.createdAt,
+      });
     });
   }
 
@@ -85,6 +81,12 @@ export class DeviceRepository {
   }
 
   async findBySisterId(sisterId: string): Promise<DeviceKeyRecord | null> {
+    const stableDocument = await this.collection.doc(sisterId).get();
+    if (stableDocument.exists) {
+      const data = stableDocument.data();
+      if (data) return fromDocument(data);
+    }
+
     const snapshot = await this.collection
       .where("sisterId", "==", sisterId)
       .limit(1)
