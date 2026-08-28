@@ -3,6 +3,13 @@ import { auth } from "../firebase/admin.js";
 import { SisterHomeService } from "./home.service.js";
 import { SisterRepository } from "./sister.repository.js";
 
+const SISTER_ROSTER = [
+  { sisterId: "Sister_01", name: "Nisha" },
+  { sisterId: "Sister_02", name: "Neha" },
+  { sisterId: "Sister_03", name: "Mona" },
+  { sisterId: "Sister_04", name: "Khushi" },
+] as const;
+
 export async function sisterRoutes(app: FastifyInstance): Promise<void> {
   const homeService = new SisterHomeService();
   const repository = new SisterRepository();
@@ -34,11 +41,20 @@ export async function sisterRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/admin/sisters", async (_request, reply) => {
     try {
-      const sisters = await repository.findAll();
-      return reply.code(200).send({
-        status: "ok",
-        sisters: sisters.map(({ sisterId, name, email, status }) => ({ sisterId, name, email, status })),
+      const profiles = await repository.findAll();
+      const byId = new Map(profiles.map((profile) => [profile.sisterId, profile]));
+
+      const sisters = SISTER_ROSTER.map(({ sisterId, name }) => {
+        const profile = byId.get(sisterId);
+        return {
+          sisterId,
+          name,
+          email: profile?.email ?? "",
+          status: profile?.status ?? "NOT_ENROLLED",
+        };
       });
+
+      return reply.code(200).send({ status: "ok", sisters });
     } catch {
       return reply.code(500).send({ status: "error", message: "Unable to load sisters" });
     }
