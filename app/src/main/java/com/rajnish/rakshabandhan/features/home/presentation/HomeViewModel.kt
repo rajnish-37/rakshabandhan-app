@@ -54,11 +54,7 @@ class HomeViewModel(
             runCatching {
                 val token = Tasks.await(user.getIdToken(false))?.token ?: error("Authentication token unavailable")
                 val home = api.getMe(token)
-                val claim = when (val result = claimApi.getMyClaim(token)) {
-                    is com.rajnish.rakshabandhan.features.home.data.ClaimResult.Success -> result.claim
-                    is com.rajnish.rakshabandhan.features.home.data.ClaimResult.Failure -> null
-                }
-                HomeData(home.sisterId, home.email, home.name, home.enrollmentStatus, home.gift, claim)
+                HomeData(home.sisterId, home.email, home.name, home.enrollmentStatus, home.gift, home.claim)
             }.onSuccess { data ->
                 _uiState.value = HomeUiState.Success(data)
             }.onFailure { error ->
