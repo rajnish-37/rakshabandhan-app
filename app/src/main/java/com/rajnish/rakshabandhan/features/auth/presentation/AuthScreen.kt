@@ -10,16 +10,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,11 +44,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rajnish.rakshabandhan.features.auth.domain.AuthState
-import com.rajnish.rakshabandhan.ui.theme.RakhiBlush
-import com.rajnish.rakshabandhan.ui.theme.RakhiGold
-import com.rajnish.rakshabandhan.ui.theme.RakhiInk
-import com.rajnish.rakshabandhan.ui.theme.RakhiMaroon
-import com.rajnish.rakshabandhan.ui.theme.RakhiMuted
 
 @Composable
 fun AuthScreen(
@@ -56,327 +53,70 @@ fun AuthScreen(
     onVerifyInvitation: () -> Unit,
     onAuthenticate: () -> Unit,
     onRetry: () -> Unit,
-    previewScreenTwo: Boolean = false,
 ) {
-    if (previewScreenTwo) {
-        TrustedDeviceScreen()
-        return
-    }
-
     LaunchedEffect(uiState.authState) {
-        if (uiState.authState == AuthState.Unauthenticated) {
-            onAuthenticate()
-        }
+        if (uiState.authState == AuthState.Unauthenticated) onAuthenticate()
     }
 
     when (val state = uiState.authState) {
         AuthState.Authenticated -> AuthenticatedAppShell()
         AuthState.Initializing -> LoadingScreen("Checking authentication...")
-        AuthState.Authenticating -> TrustedDeviceScreen()
+        AuthState.Authenticating -> LoadingScreen("Authenticating...")
         AuthState.Enrolling -> LoadingScreen("Verifying invitation...")
-        AuthState.EnrollmentRequired -> EnrollmentScreen(
-            email = uiState.email,
-            code = uiState.code,
-            onEmailChanged = onEmailChanged,
-            onCodeChanged = onCodeChanged,
-            onVerifyInvitation = onVerifyInvitation,
-        )
-        AuthState.Unauthenticated -> TrustedDeviceScreen()
-        AuthState.Offline -> CenteredActionScreen(
-            title = "You're Offline",
-            message = "Connect to the internet and try again.",
-            actionLabel = "Retry",
-            onAction = onRetry,
-        )
-        is AuthState.Error -> CenteredActionScreen(
-            title = "Authentication Error",
-            message = state.message,
-            actionLabel = "Try Again",
-            onAction = onRetry,
-        )
+        AuthState.EnrollmentRequired -> EnrollmentScreen(email = uiState.email, code = uiState.code, onEmailChanged = onEmailChanged, onCodeChanged = onCodeChanged, onVerifyInvitation = onVerifyInvitation)
+        AuthState.Unauthenticated -> LoadingScreen("Authentication required...")
+        AuthState.Offline -> CenteredActionScreen("You're Offline", "Connect to the internet and try again.", "Retry", onRetry)
+        is AuthState.Error -> CenteredActionScreen("Authentication Error", state.message, "Try Again", onRetry)
     }
 }
 
 @Composable
-private fun TrustedDeviceScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 48.dp, end = 22.dp)
-                    .size(112.dp)
-                    .clip(CircleShape)
-                    .background(RakhiBlush.copy(alpha = 0.72f)),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = 72.dp, start = 18.dp)
-                    .size(82.dp)
-                    .clip(CircleShape)
-                    .background(RakhiBlush.copy(alpha = 0.52f)),
-            )
+private fun EnrollmentScreen(email: String, code: String, onEmailChanged: (String) -> Unit, onCodeChanged: (String) -> Unit, onVerifyInvitation: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Surface(Modifier.fillMaxSize(), color = colors.background) {
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.align(Alignment.TopEnd).padding(top = 44.dp, end = 18.dp).size(110.dp).clip(CircleShape).background(colors.primaryContainer.copy(alpha = .45f)))
+            Box(Modifier.align(Alignment.BottomStart).padding(bottom = 64.dp, start = 14.dp).size(82.dp).clip(CircleShape).background(colors.secondaryContainer.copy(alpha = .35f)))
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 36.dp),
+                modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.Top,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(92.dp)
-                        .clip(CircleShape)
-                        .background(RakhiBlush),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Fingerprint,
-                        contentDescription = "Secure sign in",
-                        tint = RakhiMaroon,
-                        modifier = Modifier.size(50.dp),
-                    )
+                Spacer(Modifier.height(12.dp))
+                Box(Modifier.size(62.dp).clip(CircleShape).background(colors.primaryContainer), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Outlined.FavoriteBorder, null, tint = colors.onPrimaryContainer, modifier = Modifier.size(30.dp))
                 }
+                Spacer(Modifier.height(18.dp))
+                Text("आपके लिए कुछ रखा है…", style = MaterialTheme.typography.headlineSmall, color = colors.onBackground, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(8.dp))
+                Text("इस बार की राखी\nथोड़ी सी खास है।", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, lineHeight = 25.sp)
+                Spacer(Modifier.height(22.dp))
 
-                Spacer(modifier = Modifier.height(26.dp))
-
-                Text(
-                    text = "बस एक आख़िरी कदम…",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = RakhiInk,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "इस डिवाइस को पहचान लेने दें,\nफिर आपकी राखी खुल जाएगी।",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = RakhiMuted,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 25.sp,
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp,
-                    shadowElevation = 8.dp,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 22.dp, vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = "आपकी पहचान सुरक्षित है",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = RakhiInk,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center,
+                Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), color = colors.surface, contentColor = colors.onSurface, tonalElevation = 3.dp, shadowElevation = 8.dp) {
+                    Column(Modifier.padding(20.dp)) {
+                        Text("शुरू करने के लिए", style = MaterialTheme.typography.titleMedium, color = colors.onSurface, fontWeight = FontWeight.SemiBold)
+                        Text("आपको भेजा गया email और invitation code डालें।", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(top = 5.dp, bottom = 16.dp))
+                        OutlinedTextField(
+                            value = email, onValueChange = onEmailChanged, modifier = Modifier.fillMaxWidth(), label = { Text("Email address") },
+                            leadingIcon = { Icon(Icons.Outlined.Email, null) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = colors.primary, focusedLabelColor = colors.primary, cursorColor = colors.primary, unfocusedBorderColor = colors.outline, unfocusedLabelColor = colors.onSurfaceVariant, focusedLeadingIconColor = colors.primary, unfocusedLeadingIconColor = colors.onSurfaceVariant)
                         )
-                        Text(
-                            text = "Fingerprint या Face से बस एक बार पहचान कीजिए।",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = RakhiMuted,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 6.dp),
+                        OutlinedTextField(
+                            value = code, onValueChange = onCodeChanged, modifier = Modifier.fillMaxWidth().padding(top = 12.dp), label = { Text("Invitation code") },
+                            leadingIcon = { Icon(Icons.Outlined.Key, null) }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii), shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = colors.primary, focusedLabelColor = colors.primary, cursorColor = colors.primary, unfocusedBorderColor = colors.outline, unfocusedLabelColor = colors.onSurfaceVariant, focusedLeadingIconColor = colors.primary, unfocusedLeadingIconColor = colors.onSurfaceVariant)
                         )
-
-                        Row(
-                            modifier = Modifier.padding(top = 18.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .clip(CircleShape)
-                                    .background(RakhiGold),
-                            )
-                            Text(
-                                text = "  आपके डिवाइस की security के साथ",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = RakhiMuted,
-                            )
+                        Button(onClick = onVerifyInvitation, modifier = Modifier.fillMaxWidth().padding(top = 18.dp).height(54.dp), shape = RoundedCornerShape(17.dp), colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary)) {
+                            Text("मेरी राखी खोलें", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = "भैया की तरफ़ से, प्यार के साथ ❤️",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = RakhiMuted,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EnrollmentScreen(
-    email: String,
-    code: String,
-    onEmailChanged: (String) -> Unit,
-    onCodeChanged: (String) -> Unit,
-    onVerifyInvitation: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 52.dp, end = 28.dp)
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(RakhiBlush.copy(alpha = 0.75f)),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = 84.dp, start = 22.dp)
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(RakhiBlush.copy(alpha = 0.55f)),
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 36.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(CircleShape)
-                        .background(RakhiBlush),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = null,
-                        tint = RakhiMaroon,
-                        modifier = Modifier.size(30.dp),
-                    )
+                Row(Modifier.padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(colors.secondary))
+                    Text("  भैया की तरफ़ से, प्यार के साथ ❤️", style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
                 }
-                Spacer(modifier = Modifier.height(22.dp))
-                Text(
-                    text = "आपके लिए कुछ रखा है…",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = RakhiInk,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "इस बार की राखी\nथोड़ी सी खास है।",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = RakhiMuted,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 25.sp,
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp,
-                    shadowElevation = 8.dp,
-                ) {
-                    Column(modifier = Modifier.padding(22.dp)) {
-                        Text(
-                            text = "शुरू करने के लिए",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = RakhiInk,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            text = "आपको भेजा गया email और invitation code डालें।",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = RakhiMuted,
-                            modifier = Modifier.padding(top = 5.dp, bottom = 18.dp),
-                        )
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = onEmailChanged,
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Email address") },
-                            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = RakhiMaroon,
-                                focusedLabelColor = RakhiMaroon,
-                                cursorColor = RakhiMaroon,
-                            ),
-                        )
-                        OutlinedTextField(
-                            value = code,
-                            onValueChange = onCodeChanged,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            label = { Text("Invitation code") },
-                            leadingIcon = { Icon(Icons.Outlined.Key, contentDescription = null) },
-                            singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = RakhiMaroon,
-                                focusedLabelColor = RakhiMaroon,
-                                cursorColor = RakhiMaroon,
-                            ),
-                        )
-                        Button(
-                            onClick = onVerifyInvitation,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 20.dp)
-                                .height(54.dp),
-                            shape = RoundedCornerShape(17.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = RakhiMaroon,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                        ) {
-                            Text(text = "मेरी राखी खोलें", fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                }
-                Row(
-                    modifier = Modifier.padding(top = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(RakhiGold),
-                    )
-                    Text(
-                        text = "  भैया की तरफ़ से, प्यार के साथ ❤️",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = RakhiMuted,
-                    )
-                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
@@ -384,36 +124,21 @@ private fun EnrollmentScreen(
 
 @Composable
 private fun LoadingScreen(message: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        CircularProgressIndicator()
-        Text(text = message, modifier = Modifier.padding(top = 12.dp))
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
+        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            Text(message, modifier = Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.onBackground)
+        }
     }
 }
 
 @Composable
-private fun CenteredActionScreen(
-    title: String,
-    actionLabel: String,
-    onAction: () -> Unit,
-    message: String? = null,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(title)
-        if (message != null) {
-            Text(text = message, modifier = Modifier.padding(top = 8.dp))
-        }
-        Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp)) {
-            Text(actionLabel)
+private fun CenteredActionScreen(title: String, message: String, actionLabel: String, onAction: () -> Unit) {
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
+        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(title, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Text(message, modifier = Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)) { Text(actionLabel) }
         }
     }
 }
