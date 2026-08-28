@@ -8,13 +8,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Redeem
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -23,74 +35,162 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rajnish.rakshabandhan.ui.theme.RakhiBlush
+import com.rajnish.rakshabandhan.ui.theme.RakhiGold
+import com.rajnish.rakshabandhan.ui.theme.RakhiMaroon
+import com.rajnish.rakshabandhan.ui.theme.RakhiMuted
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (val current = state) {
             HomeUiState.Loading -> LoadingHome()
             is HomeUiState.Success -> SuccessHome(current.data, viewModel)
-            HomeUiState.Offline -> ActionHome("You're offline", "Please reconnect and try again.", "Retry", viewModel::load)
-            is HomeUiState.Error -> ActionHome("Something went wrong", current.message, "Try again", viewModel::load)
-            HomeUiState.Unauthorized -> ActionHome("Authentication required", "Your session is no longer available.", "Retry", viewModel::load)
+            HomeUiState.Offline -> ActionHome("अभी connection नहीं है", "Internet से जुड़कर फिर कोशिश कीजिए।", "फिर कोशिश करें", viewModel::load)
+            is HomeUiState.Error -> ActionHome("कुछ देर बाद फिर कोशिश करें", current.message, "फिर कोशिश करें", viewModel::load)
+            HomeUiState.Unauthorized -> ActionHome("Session समाप्त हो गया", "अपनी पहचान फिर से verify कीजिए।", "फिर कोशिश करें", viewModel::load)
         }
     }
 }
 
 @Composable
 private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
-    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "❤️", modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp))
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Icon(
+                    imageVector = Icons.Outlined.Favorite,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(12.dp).width(24.dp),
+                )
+            }
             Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(text = "Rakhi Bandhan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(text = "Your special day", style = MaterialTheme.typography.bodyMedium)
+                Text("राखी का दिन", style = MaterialTheme.typography.labelLarge, color = RakhiMuted)
+                Text("खुश रहो, ${data.name} ❤️", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
-        Text(text = "Hello, ${data.name} ❤️", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text(text = "Wishing you a very Happy Raksha Bandhan!", style = MaterialTheme.typography.bodyLarge)
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(30.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 26.dp)) {
+                Text("कुछ रिश्ते", style = MaterialTheme.typography.labelLarge, color = RakhiMaroon)
+                Text(
+                    "वक़्त के साथ पुराने नहीं होते…",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                Text(
+                    "बस उनकी यादें और भी खूबसूरत हो जाती हैं।",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    "बचपन की लड़ाइयाँ, छोटी-छोटी शरारतें… और आज भी वही अपनापन। ❤️",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
+                    lineHeight = 22.sp,
+                    modifier = Modifier.padding(top = 18.dp),
+                )
+            }
+        }
+
         GiftCard(data.gift, data.claim, viewModel)
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
-                Text(text = "Your account is protected", fontWeight = FontWeight.SemiBold)
-                Text(text = "Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 3.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(shape = CircleShape, color = RakhiBlush) {
+                    Icon(
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = null,
+                        tint = RakhiMaroon,
+                        modifier = Modifier.padding(9.dp),
+                    )
+                }
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text("आपकी जगह सुरक्षित है", fontWeight = FontWeight.SemiBold)
+                    Text("Trusted device authentication active है।", style = MaterialTheme.typography.bodySmall, color = RakhiMuted, modifier = Modifier.padding(top = 3.dp))
+                }
             }
         }
+
+        Text(
+            "राखी बाँधने को हाथ दूर हों तो क्या…\nदिलों की डोर तो पास ही रहती है। ❤️",
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = RakhiMuted,
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp,
+        )
     }
 }
 
 @Composable
 private fun GiftCard(gift: com.rajnish.rakshabandhan.features.home.data.GiftData?, claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData?, viewModel: HomeViewModel) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Text(text = "🎁  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+    ) {
+        Column(modifier = Modifier.padding(22.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Icon(Icons.Outlined.Redeem, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(10.dp))
+                }
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text("तुम्हारे लिए एक तोहफ़ा 🎁", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("दिल से भेजा गया है", style = MaterialTheme.typography.bodySmall, color = RakhiMuted, modifier = Modifier.padding(top = 2.dp))
+                }
+            }
             Spacer(modifier = Modifier.height(18.dp))
             when {
                 claim?.status == "PAID" -> PaidClaimState(claim)
                 claim?.status == "PENDING" -> PendingClaimState(claim)
                 gift == null -> {
-                    Text(text = "Gift details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(text = "Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp))
+                    Text("अभी तोहफ़ा तैयार हो रहा है…", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("जब भैया इसे configure करेंगे, यहीं दिखाई देगा।", style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, modifier = Modifier.padding(top = 6.dp))
                 }
                 gift.claimEligible -> EligibleClaimState(gift, viewModel)
                 else -> {
                     val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
-                    Text(text = "${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                    Text(text = "Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = "This gift is not currently eligible for claiming.", style = MaterialTheme.typography.labelMedium)
+                    Text("${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                    Text("अभी claim के लिए उपलब्ध नहीं है।", style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, modifier = Modifier.padding(top = 6.dp))
                 }
             }
         }
@@ -106,11 +206,11 @@ private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.dat
     val submitting = successData?.claimSubmitting == true
     val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
 
-    Text(text = "${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-    Text(text = "Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
+    Text("${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+    Text("तुम्हारी खुशी के नाम ❤️", style = MaterialTheme.typography.bodyLarge, color = RakhiMuted, modifier = Modifier.padding(top = 4.dp))
     Spacer(modifier = Modifier.height(18.dp))
-    Text(text = "Claim your gift", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(text = "Enter the UPI ID where you want to receive the gift.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp, bottom = 14.dp))
+    Text("तोहफ़ा कहाँ भेजूँ?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+    Text("अपनी UPI ID डाल दो, बाकी हम संभाल लेंगे।", style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, modifier = Modifier.padding(top = 5.dp, bottom = 14.dp))
     OutlinedTextField(
         value = upiId,
         onValueChange = { upiId = it; viewModel.clearClaimError() },
@@ -121,56 +221,55 @@ private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.dat
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
         enabled = !submitting,
         isError = error != null,
-        supportingText = { Text("Example: name@okaxis or mobile@upi") },
+        supportingText = { Text("जैसे: name@okaxis या mobile@upi") },
     )
-    error?.let { Text(text = it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
+    error?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(modifier = Modifier.height(10.dp))
     Button(
         onClick = { viewModel.submitClaim(upiId) },
         enabled = !submitting && upiId.isNotBlank(),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = RakhiMaroon),
     ) {
-        if (submitting) {
-            CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
-        }
-        Text(if (submitting) "Submitting..." else "Claim Gift")
+        if (submitting) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
+        Text(if (submitting) "बस भेज रहे हैं…" else "मेरा तोहफ़ा भेज दो", fontWeight = FontWeight.SemiBold)
     }
-    Text(text = "Payment will be made manually by the admin.", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+    Text("Payment भैया manually करेंगे।", style = MaterialTheme.typography.labelMedium, color = RakhiMuted, modifier = Modifier.padding(top = 10.dp))
 }
 
 @Composable
 private fun PendingClaimState(claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData) {
-    Text(text = "✅ Claim submitted", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(text = "Your gift claim has been received and is waiting for payment.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
+    Text("तुम्हारा तोहफ़ा रास्ते में है 💌", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+    Text("Claim मिल गया है। अब बस payment का इंतज़ार है।", style = MaterialTheme.typography.bodyMedium, color = RakhiMuted, modifier = Modifier.padding(top = 6.dp))
     Spacer(modifier = Modifier.height(16.dp))
-    Text(text = "Amount: ${claim.currency} ${claim.amount}", fontWeight = FontWeight.SemiBold)
-    Text(text = "UPI ID: ${claim.upiId}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-    Text(text = "Status: PENDING", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-    Text(text = "The admin will complete the payment manually.", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Text("${claim.currency} ${claim.amount}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    Text("UPI: ${claim.upiId}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp))
+    Text("PENDING", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
 }
 
 @Composable
 private fun PaidClaimState(claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData) {
-    Text(text = "🎉 Gift Paid!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(text = "Happy Raksha Bandhan! Your gift has been paid successfully.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 6.dp))
+    Text("तोहफ़ा पहुँच गया! 🎉", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+    Text("पैसे पहुँच गए हैं… दुआएँ तो पहले ही पहुँच चुकी थीं। ❤️", style = MaterialTheme.typography.bodyLarge, color = RakhiMuted, modifier = Modifier.padding(top = 6.dp))
     Spacer(modifier = Modifier.height(16.dp))
-    Text(text = "Amount paid: ${claim.currency} ${claim.amount}", fontWeight = FontWeight.SemiBold)
-    claim.paidAt?.let { Text(text = "Paid at: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp)) }
+    Text("${claim.currency} ${claim.amount}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    claim.paidAt?.let { Text("Paid: $it", style = MaterialTheme.typography.bodySmall, color = RakhiMuted, modifier = Modifier.padding(top = 6.dp)) }
 }
 
 @Composable
 private fun LoadingHome() {
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         CircularProgressIndicator()
-        Text(text = "Loading your Rakhi home...", modifier = Modifier.padding(top = 12.dp))
+        Text("आपकी राखी तैयार हो रही है…", modifier = Modifier.padding(top = 12.dp), color = RakhiMuted)
     }
 }
 
 @Composable
 private fun ActionHome(title: String, message: String, action: String, onAction: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text(text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(text = message, modifier = Modifier.padding(top = 8.dp))
-        Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp)) { Text(text = action) }
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text(message, modifier = Modifier.padding(top = 8.dp), textAlign = TextAlign.Center, color = RakhiMuted)
+        Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp), shape = RoundedCornerShape(16.dp)) { Text(action) }
     }
 }
