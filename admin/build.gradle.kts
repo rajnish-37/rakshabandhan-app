@@ -1,17 +1,24 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
 fun configuredBackendUrl(): String? {
-    project.findProperty("RAKSHA_BACKEND_BASE_URL")?.toString()?.trim()?.trimEnd('/')?.takeIf { it.isNotBlank() }?.let { return it }
+    project.findProperty("RAKSHA_BACKEND_BASE_URL")
+        ?.toString()
+        ?.trim()
+        ?.trimEnd('/')
+        ?.takeIf { it.isNotBlank() }
+        ?.let { return it }
 
     // Keep the Admin app aligned with the existing Sister app's local configuration
     // when the URL is currently stored in app/gradle.properties on the developer machine.
     val sisterProperties = rootProject.file("app/gradle.properties")
     if (sisterProperties.isFile) {
-        val properties = java.util.Properties()
-        sisterProperties.inputStream().use(properties::load)
+        val properties = Properties()
+        sisterProperties.inputStream().use { properties.load(it) }
         properties.getProperty("RAKSHA_BACKEND_BASE_URL")
             ?.trim()
             ?.trimEnd('/')
