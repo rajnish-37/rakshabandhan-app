@@ -11,7 +11,8 @@ internal data class InvitationResult(
 
 internal object InvitationApi {
     fun createInvitation(sisterId: String, email: String): InvitationResult {
-        val connection = (URL("${BuildConfig.BACKEND_BASE_URL}/invitations").openConnection() as HttpURLConnection).apply {
+        val backendUrl = BuildConfig.BACKEND_BASE_URL.trimEnd('/')
+        val connection = (URL("$backendUrl/invitations").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 10_000
             readTimeout = 15_000
@@ -39,7 +40,11 @@ internal object InvitationApi {
 
             InvitationResult(statusCode in 200..299, message)
         } catch (error: Exception) {
-            InvitationResult(false, "Unable to reach the backend. Check the network and try again.")
+            val detail = error.message?.takeIf { it.isNotBlank() }
+            InvitationResult(
+                false,
+                if (detail != null) "Unable to reach $backendUrl. $detail" else "Unable to reach $backendUrl. Check that the backend is running and reachable from this device.",
+            )
         } finally {
             connection.disconnect()
         }
