@@ -41,13 +41,16 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["allowCleartextTraffic"] = false
     }
 
     buildTypes {
         debug {
+            manifestPlaceholders["allowCleartextTraffic"] = true
             buildConfigField("String", "BACKEND_BASE_URL", "\"${configuredBackendBaseUrl ?: "http://10.0.2.2:8080"}\"")
         }
         release {
+            manifestPlaceholders["allowCleartextTraffic"] = false
             optimization { enable = false }
             buildConfigField("String", "BACKEND_BASE_URL", "\"${configuredBackendBaseUrl ?: error("RAKSHA_BACKEND_BASE_URL must be configured for release builds")}\"")
         }
