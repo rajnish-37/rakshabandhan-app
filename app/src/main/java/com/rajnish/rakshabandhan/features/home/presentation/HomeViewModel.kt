@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.rajnish.rakshabandhan.features.home.data.GiftData
 import com.rajnish.rakshabandhan.features.home.data.HomeApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ data class HomeData(
     val email: String,
     val name: String,
     val enrollmentStatus: String,
+    val gift: GiftData?,
 )
 
 class HomeViewModel(
@@ -45,12 +47,11 @@ class HomeViewModel(
             }
 
             runCatching {
-                val token = Tasks.await(user.getIdToken(false))?.token
-                    ?: error("Authentication token unavailable")
+                val token = Tasks.await(user.getIdToken(false))?.token ?: error("Authentication token unavailable")
                 api.getMe(token)
             }.onSuccess { data ->
                 _uiState.value = HomeUiState.Success(
-                    HomeData(data.sisterId, data.email, data.name, data.enrollmentStatus)
+                    HomeData(data.sisterId, data.email, data.name, data.enrollmentStatus, data.gift)
                 )
             }.onFailure { error ->
                 _uiState.value = when (error) {
