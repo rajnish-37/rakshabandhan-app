@@ -3,17 +3,20 @@ package com.rajnish.rakshabandhan
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
 import com.rajnish.rakshabandhan.core.security.BiometricAuthenticator
 import com.rajnish.rakshabandhan.core.security.DeviceKeyManager
 import com.rajnish.rakshabandhan.features.auth.data.AuthRepositoryImpl
+import com.rajnish.rakshabandhan.features.auth.domain.AuthState
 import com.rajnish.rakshabandhan.features.auth.presentation.AuthScreen
 import com.rajnish.rakshabandhan.features.auth.presentation.AuthViewModel
 import com.rajnish.rakshabandhan.features.auth.presentation.AuthViewModelFactory
 import com.rajnish.rakshabandhan.ui.theme.RakshaBandhanTheme
+
+private const val SCREEN_TWO_PREVIEW = true
 
 class MainActivity : FragmentActivity() {
 
@@ -36,6 +39,11 @@ class MainActivity : FragmentActivity() {
         setContent {
             RakshaBandhanTheme {
                 val uiState by authViewModel.uiState.collectAsState()
+
+                if (SCREEN_TWO_PREVIEW && uiState.authState == AuthState.Initializing) {
+                    // The real auth state machine remains intact; this condition only
+                    // waits for its initial state while the preview screen is rendered.
+                }
 
                 AuthScreen(
                     uiState = uiState,
