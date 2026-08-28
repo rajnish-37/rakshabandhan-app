@@ -1,11 +1,13 @@
 import Fastify from "fastify";
-import { config } from "./config.js";
+import { config, validateProductionConfig } from "./config.js";
 import { checkFirestoreConnection } from "./firebase/health.js";
 import { invitationRoutes } from "./invitation/invitation.routes.js";
 import { deviceRoutes } from "./device/device.routes.js";
 import { sisterRoutes } from "./sister/sister.routes.js";
 import { giftRoutes } from "./gift/gift.routes.js";
 import { claimRoutes } from "./claim/claim.routes.js";
+
+validateProductionConfig();
 
 const app = Fastify({
   logger: true,
@@ -18,7 +20,9 @@ app.addHook("onSend", async (_request, reply) => {
   reply.header("X-Content-Type-Options", "nosniff");
   reply.header("Referrer-Policy", "no-referrer");
   reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  if (config.nodeEnv === "production") {
+    reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
 });
 
 app.get("/health", async () => ({
