@@ -56,28 +56,19 @@ private fun SuccessHome(data: HomeData, viewModel: HomeViewModel) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "❤️",
-                modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp),
-            )
+            Text(text = "❤️", modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp))
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text(text = "Rakhi Bandhan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(text = "Your special day", style = MaterialTheme.typography.bodyMedium)
             }
         }
-
         Text(text = "Hello, ${data.name} ❤️", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(text = "Wishing you a very Happy Raksha Bandhan!", style = MaterialTheme.typography.bodyLarge)
         GiftCard(data.gift, data.claim, viewModel)
-
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
                 Text(text = "Your account is protected", fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = "Trusted device authentication is active.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 3.dp),
-                )
+                Text(text = "Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 3.dp))
             }
         }
     }
@@ -89,32 +80,20 @@ private fun GiftCard(
     claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData?,
     viewModel: HomeViewModel,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(text = "🎁  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(18.dp))
-
             when {
                 claim?.status == "PAID" -> PaidClaimState(claim)
                 claim?.status == "PENDING" -> PendingClaimState(claim)
                 gift == null -> {
                     Text(text = "Gift details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = "Your gift will appear here once it is configured.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 5.dp),
-                    )
+                    Text(text = "Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp))
                 }
                 gift.claimEligible -> EligibleClaimState(gift, viewModel)
                 else -> {
-                    val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
-                        minimumFractionDigits = 2
-                        maximumFractionDigits = 2
-                    }.format(gift.amount)
+                    val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
                     Text(text = "${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
                     Text(text = "Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
                     Spacer(modifier = Modifier.height(12.dp))
@@ -131,53 +110,20 @@ private fun EligibleClaimState(gift: com.rajnish.rakshabandhan.features.home.dat
     var submitting by remember { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsState()
     val error = (state as? HomeUiState.Success)?.data?.claimError
-    val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
-        minimumFractionDigits = 2
-        maximumFractionDigits = 2
-    }.format(gift.amount)
-
+    val amount = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(gift.amount)
     Text(text = "${gift.currency} $amount", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
     Text(text = "Gift status: ${gift.status.replace('_', ' ')}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
     Spacer(modifier = Modifier.height(18.dp))
     Text(text = "Claim your gift", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(
-        text = "Enter the UPI ID where you want to receive the gift.",
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(top = 5.dp, bottom = 14.dp),
-    )
-    OutlinedTextField(
-        value = upiId,
-        onValueChange = { upiId = it; viewModel.clearClaimError() },
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text("UPI ID") },
-        placeholder = { Text("yourname@upi") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-        enabled = !submitting,
-        isError = error != null,
-        supportingText = { Text("Example: name@okaxis or mobile@upi") },
-    )
-    error?.let {
-        Text(text = it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
-    }
+    Text(text = "Enter the UPI ID where you want to receive the gift.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp, bottom = 14.dp))
+    OutlinedTextField(value = upiId, onValueChange = { upiId = it; viewModel.clearClaimError() }, modifier = Modifier.fillMaxWidth(), label = { Text("UPI ID") }, placeholder = { Text("yourname@upi") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii), enabled = !submitting, isError = error != null, supportingText = { Text("Example: name@okaxis or mobile@upi") })
+    error?.let { Text(text = it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(modifier = Modifier.height(10.dp))
-    Button(
-        onClick = {
-            submitting = true
-            viewModel.submitClaim(upiId)
-            submitting = false
-        },
-        enabled = !submitting && upiId.isNotBlank(),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Button(onClick = { submitting = true; viewModel.submitClaim(upiId); submitting = false }, enabled = !submitting && upiId.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
         if (submitting) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
         Text(if (submitting) "Submitting..." else "Claim Gift")
     }
-    Text(
-        text = "Payment will be made manually by the admin.",
-        style = MaterialTheme.typography.labelMedium,
-        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp),
-    )
+    Text(text = "Payment will be made manually by the admin.", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
 }
 
 @Composable
@@ -194,11 +140,7 @@ private fun PendingClaimState(claim: com.rajnish.rakshabandhan.features.home.dat
 @Composable
 private fun PaidClaimState(claim: com.rajnish.rakshabandhan.features.home.data.GiftClaimData) {
     Text(text = "🎉 Gift Paid!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(
-        text = "Happy Raksha Bandhan! Your gift has been paid successfully.",
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier.padding(top = 6.dp),
-    )
+    Text(text = "Happy Raksha Bandhan! Your gift has been paid successfully.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 6.dp))
     Spacer(modifier = Modifier.height(16.dp))
     Text(text = "Amount paid: ${claim.currency} ${claim.amount}", fontWeight = FontWeight.SemiBold)
     claim.paidAt?.let { Text(text = "Paid at: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp)) }
