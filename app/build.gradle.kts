@@ -33,6 +33,11 @@ android {
             optimization {
                 enable = false
             }
+            buildConfigField(
+                "String",
+                "BACKEND_BASE_URL",
+                "\"${project.findProperty("RAKSHA_BACKEND_BASE_URL") ?: ""}\""
+            )
         }
     }
     compileOptions {
