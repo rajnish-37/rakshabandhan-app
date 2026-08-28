@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "738469422448",
+    "project_id": "rakhi-gift-app",
+    "storage_bucket": "rakhi-gift-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:738469422448:android:80c77bb99712c783ea5bb5",
+        "android_client_info": {
+          "package_name": "com.rajnish.rakshabandhan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUaaL79c3XDBOL-YwUi2gFLJ_-Oqx3KM4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

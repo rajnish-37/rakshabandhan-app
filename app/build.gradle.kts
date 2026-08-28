@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -20,6 +22,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "BACKEND_BASE_URL",
+                "\"${project.findProperty("RAKSHA_BACKEND_BASE_URL") ?: "http://10.0.2.2:8080"}\""
+            )
+        }
         release {
             optimization {
                 enable = false
@@ -32,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -40,6 +50,11 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(platform(libs.firebase.bom))
+
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
 
 
     implementation(platform(libs.androidx.compose.bom))

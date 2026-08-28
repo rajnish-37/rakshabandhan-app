@@ -4,9 +4,13 @@ sealed interface AuthState {
 
     data object Initializing : AuthState
 
+    data object EnrollmentRequired : AuthState
+
     data object Unauthenticated : AuthState
 
     data object Authenticating : AuthState
+
+    data object Enrolling : AuthState
 
     data object Authenticated : AuthState
 
