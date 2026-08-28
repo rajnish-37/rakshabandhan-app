@@ -12,6 +12,8 @@ export class GiftRepository {
     if (snapshot.empty) return null;
 
     const document = snapshot.docs[0];
+    if (!document) return null;
+
     const data = document.data();
     return {
       giftId: data.giftId,
