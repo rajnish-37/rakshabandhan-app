@@ -3,6 +3,25 @@ import type { GiftClaim } from "./claim.model.js";
 
 const COLLECTION = "claims";
 
+type TimestampLike = { toDate?: () => Date };
+
+function toDate(value: unknown, field: string): Date {
+  if (value instanceof Date) return value;
+  if (value && typeof value === "object" && typeof (value as TimestampLike).toDate === "function") {
+    return (value as TimestampLike).toDate!();
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  throw new Error(`Invalid ${field} timestamp`);
+}
+
+function nullableDate(value: unknown, field: string): Date | null {
+  if (value == null || value === "") return null;
+  return toDate(value, field);
+}
+
 function toClaim(data: FirebaseFirestore.DocumentData): GiftClaim {
   return {
     claimId: data.claimId,
@@ -14,10 +33,10 @@ function toClaim(data: FirebaseFirestore.DocumentData): GiftClaim {
     currency: data.currency,
     upiId: data.upiId,
     status: data.status,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
-    paidAt: data.paidAt?.toDate() ?? null,
-    paidBy: data.paidBy ?? null,
+    createdAt: toDate(data.createdAt ?? data.created_at, "createdAt"),
+    updatedAt: toDate(data.updatedAt ?? data.updated_at, "updatedAt"),
+    paidAt: nullableDate(data.paidAt ?? data.paid_at, "paidAt"),
+    paidBy: data.paidBy ?? data.paid_by ?? null,
   };
 }
 
