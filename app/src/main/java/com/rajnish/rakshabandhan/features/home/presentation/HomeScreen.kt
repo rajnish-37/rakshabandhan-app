@@ -11,15 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CardGiftcard
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,31 +43,27 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
 @Composable
 private fun SuccessHome(data: HomeData) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp), verticalArrangement = Arrangement.Top) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 28.dp),
+        verticalArrangement = Arrangement.Top,
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) { Icon(Icons.Outlined.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-            Column(Modifier.padding(start = 12.dp)) {
+            Text("❤️", modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(12.dp))
+            Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text("Rakhi Bandhan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("Your special day", style = MaterialTheme.typography.bodyMedium)
             }
         }
         Spacer(Modifier.height(32.dp))
         Text("Hello, ${data.name} ❤️", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Wishing you a very Happy Raksha Bandhan!", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyLarge)
+        Text("Wishing you a very Happy Raksha Bandhan!", modifier = Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(28.dp))
         GiftCard()
         Spacer(Modifier.height(18.dp))
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Lock, contentDescription = null)
-                Column(Modifier.padding(start = 14.dp)) {
-                    Text("Your account is protected", fontWeight = FontWeight.SemiBold)
-                    Text("Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, Modifier.padding(top = 3.dp))
-                }
+            Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                Text("Your account is protected", fontWeight = FontWeight.SemiBold)
+                Text("Trusted device authentication is active.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 3.dp))
             }
         }
     }
@@ -80,35 +71,36 @@ private fun SuccessHome(data: HomeData) {
 
 @Composable
 private fun GiftCard() {
-    Card(Modifier.fillMaxWidth(), RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Column(Modifier.padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.CardGiftcard, contentDescription = null, Modifier.size(28.dp))
-                Text("  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text("🎁  Your Rakhi Gift", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(18.dp))
             Text("Gift details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, Modifier.padding(top = 5.dp))
+            Text("Your gift will appear here once it is configured.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 5.dp))
             Spacer(Modifier.height(20.dp))
-            Button(onClick = {}, enabled = false, Modifier.fillMaxWidth()) { Text("Claim Gift") }
-            Text("Gift status: Not configured", style = MaterialTheme.typography.labelMedium, Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
+            Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("Claim Gift") }
+            Text("Gift status: Not configured", style = MaterialTheme.typography.labelMedium, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
         }
     }
 }
 
 @Composable
 private fun LoadingHome() {
-    Column(Modifier.fillMaxSize(), Alignment.CenterHorizontally, Arrangement.Center) {
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         CircularProgressIndicator()
-        Text("Loading your Rakhi home...", Modifier.padding(top = 12.dp))
+        Text("Loading your Rakhi home...", modifier = Modifier.padding(top = 12.dp))
     }
 }
 
 @Composable
 private fun ActionHome(title: String, message: String, action: String, onAction: () -> Unit) {
-    Column(Modifier.fillMaxSize().padding(24.dp), Alignment.CenterHorizontally, Arrangement.Center) {
+    Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(message, Modifier.padding(top = 8.dp))
-        Button(onClick = onAction, Modifier.padding(top = 16.dp)) { Text(action) }
+        Text(message, modifier = Modifier.padding(top = 8.dp))
+        Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp)) { Text(action) }
     }
 }
