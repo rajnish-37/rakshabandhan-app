@@ -5,7 +5,14 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal class ClaimApi {
+data class ClaimSuccess(val claim: GiftClaimData?)
+
+sealed interface ClaimResult {
+    data class Success(val claim: GiftClaimData?) : ClaimResult
+    data class Failure(val message: String) : ClaimResult
+}
+
+class ClaimApi {
     fun submitClaim(idToken: String, upiId: String): ClaimResult {
         val connection = openConnection("/claims", "POST", idToken).apply { doOutput = true }
         val payload = JSONObject().put("upiId", upiId.trim()).toString()
